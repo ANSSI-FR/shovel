@@ -1,0 +1,70 @@
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Suricata rules for Attack-Defense CTF games
+# Please remember to increment `sid` when adding new rules as its value must be unique.
+
+# Flags
+# As PCRE is slow, please use a content filter before.
+# Please test your regex at https://regex101.com/ using "PCRE2" mode.
+alert tcp $HOME_NET any -> any any (msg: "A ECSC flag was sent to client"; flow:to_client; content: "ECSC_"; pcre: "/ECSC_[A-Za-z0-9\/+]{32}/"; metadata: tag FLAG OUT, color danger; sid: 1;)
+alert tcp $HOME_NET any -> any any (msg: "A ECSC flag was sent to client (base64)"; flow:to_client; content: "RUNTQ1"; pcre: "/RUNTQ1[A-Za-z0-9\/+]{44}==/"; metadata: tag FLAG OUT B64, color danger; sid: 2;)
+alert tcp $HOME_NET any -> any any (msg: "A ENOWARS flag was sent to client"; flow:to_client; content: "ENO"; pcre: "/ENO[A-Za-z0-9+\/=]{48}/"; metadata: tag FLAG OUT, color danger; sid: 3;)
+alert tcp $HOME_NET any -> any any (msg: "A ENOWARS flag was sent to client (base64)"; flow:to_client; content: "RU5P"; pcre: "/RU5P[A-Za-z0-9\/+]{64}/"; metadata: tag FLAG OUT B64, color danger; sid: 4;)
+alert tcp $HOME_NET any -> any any (msg: "A FAUSTCTF flag was sent to client"; flow:to_client; content: "FAUST_"; metadata: tag FLAG OUT, color danger; sid: 5;)
+alert tcp $HOME_NET any -> any any (msg: "A FAUSTCTF flag was sent to client (base64)"; flow:to_client; content: "RkFVU1Rf"; metadata: tag FLAG OUT B64, color danger; sid: 6;)
+alert tcp $HOME_NET any -> any any (msg: "A FAUSTCTF flag was sent to client (base64, 1-byte shifted)"; flow:to_client; content: "ZBVVNUX"; metadata: tag FLAG OUT B64, color danger; sid: 7;)
+alert tcp $HOME_NET any -> any any (msg: "A FAUSTCTF flag was sent to client (base64, 2-byte shifted)"; flow:to_client; content: "GQVVTVF"; metadata: tag FLAG OUT B64, color danger; sid: 8;)
+alert tcp $HOME_NET any -> any any (msg: "A ICC flag was sent to client"; flow:to_client; content: "ICC_"; pcre: "/ICC_[A-Za-z0-9\/+]{32}/"; metadata: tag FLAG OUT, color danger; sid: 9;)
+alert tcp $HOME_NET any -> any any (msg: "A ICC flag was sent to client (base64)"; flow:to_client; content: "SUNDX"; pcre: "/SUNDX[A-Za-z0-9\/+]{43}/"; metadata: tag FLAG OUT, color danger; sid: 10;)
+alert tcp any any -> $HOME_NET any (msg: "A flag was placed in our services (probably by the CTF admins)"; flow:to_server; content: "ECSC_"; pcre: "/ECSC_[A-Za-z0-9\/+]{32}/"; metadata: tag FLAG IN, color success; sid: 51;)
+alert tcp any any -> $HOME_NET any (msg: "A flag was placed in our services (probably by the CTF admins)"; flow:to_server; content: "ENO"; pcre: "/ENO[A-Za-z0-9+\/=]{48}/"; metadata: tag FLAG IN, color success; sid: 52;)
+alert tcp any any -> $HOME_NET any (msg: "A flag was placed in our services (probably by the CTF admins)"; flow:to_server; content: "FAUST_"; pcre: "/FAUST_[A-Za-z0-9\/+]{32}/"; metadata: tag FLAG IN, color success; sid: 53;)
+alert tcp any any -> $HOME_NET any (msg: "A flag was placed in our services (probably by the CTF admins)"; flow:to_server; content: "ICC_"; pcre: "/ICC_[A-Za-z0-9\/+]{32}/"; metadata: tag FLAG IN, color success; sid: 54;)
+
+# Tag file formats using libmagic
+alert tcp any any -> any any (msg: "tag"; filemagic: "assembler source"; metadata: tag ASM, color primary; sid: 101;)
+alert tcp any any -> any any (msg: "tag"; filemagic: "GIF image"; metadata: tag GIF, color primary; sid: 102;)
+alert tcp any any -> any any (msg: "tag"; filemagic: "HTML document"; metadata: tag HTML, color primary; sid: 113;)
+alert tcp any any -> any any (msg: "tag"; filemagic: "JPEG image"; metadata: tag JPG, color primary; sid: 104;)
+alert tcp any any -> any any (msg: "tag"; filemagic: "JSON "; metadata: tag JSON, color primary; sid: 105;)
+alert tcp any any -> any any (msg: "tag"; filemagic: "PDF document"; metadata: tag PDF, color primary; sid: 106;)
+alert tcp any any -> any any (msg: "tag"; filemagic: "PNG image"; metadata: tag PNG, color primary; sid: 107;)
+alert tcp any any -> any any (msg: "tag"; filemagic: "SVG Scalable Vector Graphics image"; metadata: tag SVG, color primary; sid: 108;)
+alert tcp any any -> any any (msg: "tag"; filemagic: "VGM Video Game Music"; metadata: tag VGM, color primary; sid: 109;)
+alert tcp any any -> any any (msg: "tag"; filemagic: "Web Open Font"; metadata: tag WOFF, color primary; sid: 110;)
+alert tcp any any -> any any (msg: "tag"; filemagic: "Zip archive"; metadata: tag ZIP, color primary; sid: 111;)
+
+# Tag HTTP methods and status
+alert tcp any any -> any any (msg: "tag"; http.method; content: "GET"; metadata: tag GET, color info; sid: 201;)
+alert tcp any any -> any any (msg: "tag"; http.method; content: "POST"; metadata: tag POST, color info; sid: 202;)
+alert tcp any any -> any any (msg: "tag"; http.method; content: "PUT"; metadata: tag PUT, color info; sid: 203;)
+alert tcp any any -> any any (msg: "tag"; http.method; content: "HEAD"; metadata: tag HEAD, color info; sid: 204;)
+alert tcp any any -> any any (msg: "tag"; http.method; content: "DELETE"; metadata: tag DELETE, color info; sid: 205;)
+alert tcp any any -> any any (msg: "tag"; http.method; content: "TRACE"; metadata: tag TRACE, color info; sid: 206;)
+alert tcp any any -> any any (msg: "tag"; http.method; content: "OPTIONS"; metadata: tag OPTIONS, color info; sid: 207;)
+alert tcp any any -> any any (msg: "tag"; http.method; content: "CONNECT"; metadata: tag CONNECT, color info; sid: 208;)
+alert tcp any any -> any any (msg: "tag"; http.method; content: "PATCH"; metadata: tag PATCH, color info; sid: 209;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "200"; metadata: tag 200, color info; sid: 210;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "201"; metadata: tag 201, color info; sid: 211;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "202"; metadata: tag 202, color info; sid: 212;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "204"; metadata: tag 204, color info; sid: 213;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "301"; metadata: tag 301, color info; sid: 214;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "302"; metadata: tag 302, color info; sid: 215;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "304"; metadata: tag 304, color info; sid: 216;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "400"; metadata: tag 400, color info; sid: 217;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "401"; metadata: tag 401, color info; sid: 218;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "403"; metadata: tag 403, color info; sid: 219;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "404"; metadata: tag 404, color info; sid: 220;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "405"; metadata: tag 405, color info; sid: 221;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "408"; metadata: tag 408, color info; sid: 222;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "500"; metadata: tag 500, color warning; sid: 223;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "501"; metadata: tag 501, color warning; sid: 224;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "502"; metadata: tag 502, color warning; sid: 225;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "503"; metadata: tag 503, color warning; sid: 226;)
+alert tcp any any -> any any (msg: "tag"; http.stat_code; content: "504"; metadata: tag 504, color warning; sid: 227;)
+
+# Side-channel indicators
+alert tcp any any -> $HOME_NET any (msg: "Found python-requests User-Agent"; flow:to_server; content: "python-requests/"; http_user_agent; metadata: tag UA PYREQ, color warning; sid: 301;)
+alert tcp any any -> $HOME_NET any (msg: "Found python-httpx User-Agent"; flow:to_server; content: "python-httpx/"; http_user_agent; metadata: tag UA HTTPX, color warning; sid: 302;)
+alert tcp any any -> $HOME_NET any (msg: "Found HeadlessChrome User-Agent"; flow:to_server; content: "HeadlessChrome/"; http_user_agent; metadata: tag UA HLCHROME, color warning; sid: 303;)
+alert tcp any any -> $HOME_NET any (msg: "Found Firefox User-Agent"; flow:to_server; content: "Firefox/"; http_user_agent; metadata: tag UA FIREFOX, color warning; sid: 304;)

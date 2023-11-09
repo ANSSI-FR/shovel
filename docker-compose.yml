@@ -1,0 +1,32 @@
+version: "3"
+
+services:
+  suricata:
+    build: ./suricata
+    image: shovel-suricata
+    volumes:
+      - "./input_pcaps:/input_pcaps:ro"
+      - "./suricata/custom.rules:/suricata/custom.rules:ro"
+      - "./suricata/output:/suricata/output:rw"
+    env_file:
+      - .env
+
+  webapp:
+    build: ./webapp
+    image: shovel-webapp
+    volumes:
+      - "./input_pcaps:/webapp/static/input_pcaps:ro"
+      - "./suricata/output:/suricata/output:ro"
+      - "./webapp/database:/webapp/database:rw"
+    ports:
+      - 8000:8000
+    env_file:
+      - .env
+
+  grafana:
+    build: ./grafana
+    image: shovel-grafana
+    volumes:
+      - "./webapp/database:/webapp/database:ro"
+    ports:
+      - 3000:3000

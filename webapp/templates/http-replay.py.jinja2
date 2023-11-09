@@ -1,0 +1,53 @@
+{# Get service name from hostname:port #}
+{%- set ns = namespace(service_name="unknown") %}
+{%- for name, ipaddr_ports in services.items() %}
+{%- if (data[0].hostname + ":" + ((data[0].http_port or 80) | string)) in ipaddr_ports %}
+{%- set ns.service_name = name + "-" + ((data[0].http_port or 80) | string) %}
+{%- endif %}
+{%- endfor -%}
+#!/usr/bin/env python3
+# Filename: replay-{{ ns.service_name }}-{{ data[0].flow_id }}.py
+import json
+import os
+import sys
+import requests
+
+"""
+This file was generated from network capture towards {{ data[0].hostname }}.
+Corresponding flow id: {{ data[0].flow_id }}
+Service: {{ ns.service_name }}
+"""
+
+# Load environment variables
+# EXTRA is an array of the flagids for current service and team
+HOST = os.getenv("TARGET_IP")
+EXTRA = json.loads(os.getenv("TARGET_EXTRA", "[]"))
+
+# FIXME: You should identify if a flagid was used in the following
+# payload. If it is the case, then you should loop using EXTRA.
+#for flag_id in EXTRA:
+
+s = requests.Session()
+
+{% for req in data -%}
+# Timeout is important to prevent stall
+print(f"[+] {{ req.http_method }} http://{HOST}:{{ req.http_port or "80" }}{{ req.url }}", file=sys.stderr)
+r = s.{{ req.http_method | lower }}(
+    f"http://{HOST}:{{ req.http_port or "80" }}{{ req.url }}",
+    {%- if req.http_method == "POST" %}
+    data={{ req.rq_content | safe }},
+    {%- endif %}
+    headers={
+        {%- for header in req.request_headers %}
+        {%- if (header.name | lower) not in ["connection", "content-length"] %}
+        "{{ header.name }}": "{{ header.value }}",
+        {%- endif %}
+        {%- endfor %}
+    },
+    timeout=2,
+)
+if r.status_code != req.status:
+    print(f"[!] Request returned wrong status code {r.status_code}, expected {{ req.status }}")
+print(r.text)
+
+{% endfor -%}

@@ -1,0 +1,10 @@
+<!--
+Copyright (C) 2023  ANSSI
+SPDX-License-Identifier: GPL-3.0-only
+-->
+<svg width="32" height="32" version="1.1" viewBox="0 0 8.467 8.467" xmlns="http://www.w3.org/2000/svg">
+    <path d="m6.995 1.476-3.97 3.982" fill="none" stroke="#ae6439" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="m6.034.5117 1.922 1.927" fill="none" stroke="#ae6439" stroke-linecap="round" stroke-linejoin="bevel"/>
+    <path d="m2.362 3.557 2.558 2.566-1.62 1.625c-.618.6198-1.712 1.191-2.729.1711-.9955-.9984-.5621-2.002.1706-2.737z" fill="#6c757d"/>
+    <path d="m3.641 4.84-.8926.8952" fill="none" stroke="#828d98" stroke-linejoin="round"/>
+</svg>

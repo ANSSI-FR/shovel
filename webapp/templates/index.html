@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en" data-bs-theme="dark" class="h-100">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-src blob:; form-action 'none'">
+  <meta http-equiv="Referrer-Policy" content="no-referrer">
+  <meta name="robots" content="noindex">
+  <title>Shovel</title>
+  <link rel="icon" href="static/favicon.svg">
+  <link href="static/assets/css/bootstrap.min.css" rel="stylesheet">
+  <link href="static/assets/css/style.css" rel="stylesheet">
+  <script src="static/assets/js/bootstrap.bundle.min.js" defer></script>
+  <script type="module" src="static/assets/js/flowdisplay.js" defer></script>
+  <script type="module" src="static/assets/js/flowlist.js" defer></script>
+</head>
+
+<body class="h-100 bg-dark-subtle">
+  <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
+    <symbol id="chevron-down" viewBox="0 0 16 16">
+      <path fill='none' stroke='#adb5bd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/>
+    </symbol>
+    <symbol id="clock" viewBox="0 0 16 16">
+      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z" />
+    </symbol>
+    <symbol id="funnel" viewBox="0 0 16 16">
+      <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2z" />
+    </symbol>
+  </svg>
+
+  <main class="d-flex flex-nowrap h-100" id="app" data-start-date="{{ ctf_config.start_date }}" data-tick-length="{{ ctf_config.tick_length }}">
+    <nav class="d-flex flex-column align-items-stretch flex-shrink-0 bg-dark shadow nav-flow">
+      <div class="d-flex flex-nowrap border-bottom">
+        <select class="form-select form-select-sm rounded-0 border-0 border-end" id="services-select">
+          <option value="" selected>All flows</option>
+          <option value="!">Flows from unknown services</option>
+          {%- for name, ipaddr_ports in ctf_config.services.items() %}
+          <optgroup label="{{ name }}" data-ipports="{{ ipaddr_ports | join(' ') }}">
+            {%- if ipaddr_ports|length > 1 %}
+            <option value="{{ ipaddr_ports | join(',') }}">All ({{ name }})</option>
+            {%- endif %}
+            {%- for ipaddr_port in ipaddr_ports %}
+            <option value="{{ ipaddr_port }}">{{ ipaddr_port }} ({{ name }})</option>
+            {%- endfor %}
+          </optgroup>
+          {%- endfor %}
+        </select>
+        <div class="dropdown" id="dropdown-filter">
+          <button class="btn text-nowrap rounded-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <svg class="bi" width="16" height="16">
+              <use xlink:href="#funnel" />
+            </svg>
+            <svg class="align-baseline" width="16" height="12">
+              <use xlink:href="#chevron-down" />
+            </svg>
+          </button>
+          <div class="dropdown-menu p-4 filter-dropdown">
+            <div class="input-group flex-nowrap mb-3">
+              <span class="input-group-text">
+                <svg class="bi me-2" width="16" height="16">
+                  <use xlink:href="#clock" />
+                </svg>
+                Show until tick
+              </span>
+              <input type="number" min="0" class="form-control" placeholder="now" id="filter-time-until">
+            </div>
+            <div class="input-group flex-nowrap mb-3">
+              <span class="input-group-text">
+                Protocol
+              </span>
+              <select class="form-select" id="filter-protocol"></select>
+            </div>
+            <div id="filter-tag"></div>
+          </div>
+        </div>
+
+      </div>
+      <div class="list-group list-group-flush overflow-x-none overflow-y-scroll h-100">
+        <div class="d-flex justify-content-center" id="flow-list-loading-indicator">
+          <div class="spinner-border my-5" role="status">
+            <span class="visually-hidden">Loading…</span>
+          </div>
+        </div>
+        <div id="flow-list"></div>
+        <div class="d-flex justify-content-center d-none mx-2 mt-2 mb-4" id="flow-list-show-more">
+          <a class="btn btn-dark" href="#">See previous flows</a>
+        </div>
+      </div>
+    </nav>
+
+    <content class="vstack overflow-y-scroll">
+      <!-- Welcome section, shown only when no flows are selected -->
+      <div class="my-auto text-center p-2" id="display-welcome">
+        <img src="static/favicon.svg" alt="" width="80" />
+        <p class="fs-1 fw-light">
+          Shovel
+        </p>
+        <ul class="list-unstyled">
+          <li class="mb-1">Use <kbd>Left</kbd>, <kbd>Right</kbd> keys to quickly navigate flows.</li>
+          <li class="mb-1">Use <kbd>V</kbd> key to quickly switch raw data view.</li>
+        </ul>
+      </div>
+
+      <!-- Flow display -->
+      <div>
+        <section class="card m-3 bg-secondary-subtle font-monospace d-none border-info" id="display-flow">
+          <header class="card-header d-flex justify-content-between">
+            <span></span>
+            <a class="text-nowrap" href="#" download>Download pcap</a>
+          </header>
+          <pre class="card-body mb-0"></pre>
+        </section>
+        <section id="display-alerts"></section>
+        <section class="card m-3 bg-secondary-subtle font-monospace d-none border-success" id="display-app">
+          <header class="card-header d-flex justify-content-between">
+            <span>
+              <a class="text-decoration-none text-white" data-bs-toggle="collapse" href="#display-app-collapse" role="button" aria-expanded="true" aria-controls="display-app-collapse">
+                <svg class="bi me-2" width="16" height="16">
+                  <use xlink:href="#chevron-down" />
+                </svg>
+              </a>
+              <span></span>
+            </span>
+            <a class="text-nowrap" href="#" target="_blank">Generate script</a>
+          </header>
+          <div class="collapse show" id="display-app-collapse">
+            <pre class="card-body mb-0"></pre>
+            <div id="display-fileinfos"></div>
+          </div>
+        </section>
+        <section class="card m-3 bg-secondary-subtle font-monospace d-none border-primary" id="display-raw">
+          <header class="card-header d-flex justify-content-between">
+            <span>
+              <a class="text-decoration-none text-white" data-bs-toggle="collapse" href="#display-raw-collapse" role="button" aria-expanded="true" aria-controls="display-raw-collapse">
+                <svg class="bi me-2" width="16" height="16">
+                  <use xlink:href="#chevron-down" />
+                </svg>
+              </a>
+              <span>Raw data</span>
+              <nav class="nav nav-pills d-inline-flex" role="tablist">
+                <button class="nav-link py-0 active" id="display-raw-utf8-tab" data-bs-toggle="pill" data-bs-target="#display-raw-utf8" type="button" role="tab" aria-controls="display-raw-utf8" aria-selected="true">UTF-8</a>
+              </nav>
+            </span>
+            <a class="text-nowrap" id="display-raw-replay" href="#" target="_blank">Generate script</a>
+          </header>
+          <div class="tab-content collapse show" id="display-raw-collapse">
+            <pre class="card-body mb-0 tab-pane active" id="display-raw-utf8" role="tabpanel" aria-labelledby="display-raw-utf8-tab" tabindex="0"></pre>
+          </div>
+        </section>
+      </div>
+    </content>
+  </main>
+</body>
+
+</html>

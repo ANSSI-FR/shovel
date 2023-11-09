@@ -1,0 +1,49 @@
+{# Get service name from dest_ipport #}
+{%- set ns = namespace(service_name="unknown") %}
+{%- for name, ipaddr_ports in services.items() %}
+{%- if data.dest_ipport in ipaddr_ports %}
+{%- set ns.service_name = name + "-" + (data.port | string) %}
+{%- endif %}
+{%- endfor -%}
+#!/usr/bin/env python3
+# Filename: replay-{{ ns.service_name }}-{{ data.flow_id }}.py
+import json
+import os
+import sys
+import socket
+
+"""
+This file was generated from network capture towards {{ data.ip }}.
+Corresponding flow id: {{ data.flow_id }}
+Service: {{ ns.service_name }}
+"""
+
+# Load environment variables
+# EXTRA is an array of the flagids for current service and team
+HOST = os.getenv("TARGET_IP")
+EXTRA = json.loads(os.getenv("TARGET_EXTRA", "[]"))
+
+# Timeout is important to prevent stall
+socket.setdefaulttimeout(2)
+
+# Run the actual exploit
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect((HOST, {{ data.port }}))
+
+# FIXME: You should identify if a flag_id was used in the following
+# payload. If it is the case, then you should loop using EXTRA.
+#for flag_id in EXTRA:
+{%- for payload, server_to_client in data.tcp_data %}
+{%- if server_to_client == 0 %}
+
+s.sendall({{ payload | safe }})
+{%- else %}
+
+data = b""
+while not data.endswith({{ payload[-16:] | safe }}):
+    data += s.recv(1024)
+print(data)
+{%- endif %}
+{%- endfor %}
+
+s.close()

@@ -1,0 +1,25 @@
+name: Lint code
+
+on: [ push, pull_request ]
+
+jobs:
+  python-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: chartboost/ruff-action@v1
+        with:
+          src: "./webapp"
+      - uses: psf/black@stable
+        with:
+          src: "./webapp"
+
+  javascript-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '*'
+      - run: npm install standard
+      - run: npx standard ./webapp/static/assets

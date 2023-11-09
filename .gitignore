@@ -1,0 +1,12 @@
+input_pcaps/*
+suricata/output/filestore
+suricata/output/tcpstore
+suricata/output/udpstore
+suricata/output/*.json
+suricata/output/*.log
+webapp/database/*
+.env
+
+# Python
+__pycache__
+.ruff_cache

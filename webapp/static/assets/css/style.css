@@ -1,0 +1,61 @@
+/*
+ * Copyright (C) 2023  ANSSI
+ * SPDX-License-Identifier: GPL-3.0-only
+ */
+
+/* Use Bootstrap icons */
+.bi {
+  fill: currentColor;
+  vertical-align: -.125em;
+}
+
+/* Disable Bootstrap blue box-shadow on open <select> */
+.form-select:focus {
+  box-shadow: none;
+}
+
+/* Make flows list user-resizable */
+nav.nav-flow {
+  width: 380px;
+  min-width: 300px;
+  resize: horizontal;
+  overflow-x: hidden;
+}
+.filter-dropdown {
+  width: 300px;
+}
+
+/* Use purple background to show active elements */
+.text-bg-purple,
+#flow-list a.active {
+  color: #fff !important;
+  background-color: #59359a !important;
+}
+input.is-active,
+select.is-active {
+  border-color: #8c68cd !important;
+}
+
+/* Make active nav pills less visible in flow display */
+content .nav-pills {
+  --bs-nav-pills-link-active-bg: #495057;
+}
+
+/* Fix strange Boostrap behaviour */
+.list-group-item + .list-group-item.active {
+  margin-top: 0;
+}
+
+.rounded-pill {
+  font-size: 8pt;
+}
+
+pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.img-payload {
+  max-width: 100%;
+  max-height: 256px;
+}
