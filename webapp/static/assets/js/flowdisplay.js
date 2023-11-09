@@ -60,6 +60,52 @@ class FlowDisplay {
     return 'bin'
   }
 
+  /**
+   * Render a `hexdump -C` like output
+   * @param {Uint8Array} byteArray
+   * @returns String representation
+   */
+  renderHexDump (byteArray) {
+    let hexdump = ''
+
+    const asciiRepr = slice => {
+      let ascii = ''
+      slice.forEach((b) => {
+        if (b >= 0x20 && b < 0x7F) {
+          ascii += String.fromCharCode(b)
+        } else {
+          ascii += '.'
+        }
+      })
+      return ascii
+    }
+
+    byteArray.forEach((b, i) => {
+      if (i % 16 === 0) {
+        hexdump += i.toString(16).padStart(8, '0') + '  '
+      }
+
+      hexdump += b.toString(16).padStart(2, '0') + ' '
+
+      if (i % 16 === 15 || i === byteArray.length - 1) {
+        if (i % 16 !== 15) {
+          hexdump += ' '.repeat((15 - (i % 16)) * 3)
+          if (i % 16 < 8) {
+            hexdump += ' '
+          }
+        }
+        const sliceStart = Math.floor(i / 16) * 16
+        const slice = byteArray.slice(sliceStart, sliceStart + 16)
+        hexdump += ` |${asciiRepr(slice)}|\n`
+      } else if (i % 8 === 7) {
+        hexdump += ' '
+      }
+    })
+
+    hexdump += `${byteArray.length.toString(16).padStart(8, '0')}\n`
+    return hexdump
+  }
+
   async update () {
     // Show welcome page when no flows are selected
     const url = new URL(document.location)
@@ -202,15 +248,34 @@ class FlowDisplay {
           mainEl.textContent = d
         })
       } else {
-        // Unknown format
+        // Unknown format, also prepare hexdump view
         mainEl = document.createElement('div')
         const utf8View = document.createElement('code')
+        const hexView = document.createElement('code')
         fetch(fileHref, {}).then((d) => d.arrayBuffer()).then((d) => {
           const byteArray = new Uint8Array(d)
           const utf8Decoder = new TextDecoder()
           utf8View.textContent = utf8Decoder.decode(byteArray)
+          hexView.textContent = this.renderHexDump(byteArray)
+          hexView.classList.add('d-none')
           mainEl.appendChild(utf8View)
+          mainEl.appendChild(hexView)
         })
+
+        // Add utf-8/hex switch button
+        const switchViewBtn = document.createElement('a')
+        switchViewBtn.classList.add('text-nowrap')
+        switchViewBtn.classList.add('pe-2')
+        switchViewBtn.href = '#'
+        switchViewBtn.textContent = 'Hex'
+        switchViewBtn.addEventListener('click', e => {
+          const wasHex = utf8View.classList.contains('d-none')
+          hexView.classList.toggle('d-none', wasHex)
+          utf8View.classList.toggle('d-none', !wasHex)
+          e.target.textContent = wasHex ? 'Hex' : 'UTF-8'
+          e.preventDefault()
+        })
+        cardBtns.appendChild(switchViewBtn)
       }
 
       const downloadBtn = document.createElement('a')
@@ -246,7 +311,8 @@ class FlowDisplay {
         const utf8Decoder = new TextDecoder()
         return {
           data: {
-            utf8: utf8Decoder.decode(byteArray)
+            utf8: utf8Decoder.decode(byteArray),
+            hex: this.renderHexDump(byteArray)
           },
           direction: data.server_to_client
         }
@@ -256,9 +322,12 @@ class FlowDisplay {
         document.getElementById('display-raw-replay').href = `api/replay-${proto}/${flowId}`
 
         const utf8View = document.getElementById('display-raw-utf8')
+        const hexView = document.getElementById('display-raw-hex')
         utf8View.textContent = 'Loading...'
+        hexView.textContent = 'Loading...'
         Promise.all(promises).then(results => {
           utf8View.textContent = ''
+          hexView.textContent = ''
           results.forEach(e => {
             const codeElUtf8 = document.createElement('code')
             codeElUtf8.classList.add('text-white')
@@ -266,6 +335,13 @@ class FlowDisplay {
             codeElUtf8.classList.toggle('bg-success', e.direction === 1)
             codeElUtf8.textContent = e.data.utf8
             utf8View.appendChild(codeElUtf8)
+
+            const codeElHex = document.createElement('code')
+            codeElHex.classList.add('text-white')
+            codeElHex.classList.toggle('bg-danger', e.direction === 0)
+            codeElHex.classList.toggle('bg-success', e.direction === 1)
+            codeElHex.textContent = e.data.hex
+            hexView.appendChild(codeElHex)
           })
         })
       }
