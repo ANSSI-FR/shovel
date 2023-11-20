@@ -820,7 +820,7 @@ pcap:
     #  - auto: Suricata uses a statistical approach to detect when
     #  checksum off-loading is used. (default)
     # Warning: 'capture.checksum-validation' must be set to yes to have any validation
-    #checksum-checks: auto
+    checksum-checks: yes
     # With some accelerator cards using a modified libpcap (like Myricom), you
     # may want to have the same number of capture threads as the number of capture
     # rings. In this case, set up the threads variable to N to start N threads
@@ -843,7 +843,7 @@ pcap-file:
   #  - auto: Suricata uses a statistical approach to detect when
   #  checksum off-loading is used. (default)
   # Warning: 'checksum-validation' must be set to yes to have checksum tested
-  checksum-checks: no
+  checksum-checks: yes
 
 # See "Advanced Capture Options" below for more options, including Netmap
 # and PF_RING.
@@ -1209,7 +1209,6 @@ security:
       read:
         - /usr/
         - /etc/
-        - /nix/store/9zi80g57g091a5qky6x3cmvmmb9zcfvq-suricata-7.0.0/etc/suricata/
 
   lua:
     # Allow Lua rules. Disabled by default.
