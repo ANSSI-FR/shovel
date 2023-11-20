@@ -190,12 +190,12 @@ async def api_replay_http(request):
     )
 
 
-async def api_replay_tcp(request):
+async def api_replay_raw(request):
     flow_id = request.path_params["flow_id"]
 
     # Get flow event
     cursor = await database.execute(
-        "SELECT dest_ipport FROM flow WHERE id = ?",
+        "SELECT dest_ipport, proto FROM flow WHERE id = ?",
         [flow_id],
     )
     flow_event = await cursor.fetchone()
@@ -207,9 +207,10 @@ async def api_replay_tcp(request):
         "ip": ip,
         "port": port,
         "dest_ipport": flow_event["dest_ipport"],
+        "proto": flow_event["proto"],
     }
 
-    # Get associated TCP data
+    # Get associated raw data
     cursor = await database.execute(
         "SELECT server_to_client, sha256 FROM raw WHERE flow_id = ? ORDER BY count",
         [flow_id],
@@ -219,21 +220,22 @@ async def api_replay_tcp(request):
         raise HTTPException(404)
 
     # Load files
-    data["tcp_data"] = []
+    data["raw_data"] = []
+    proto = flow_event["proto"].lower()
     for row in rows:
         sc, sha256 = row["server_to_client"], row["sha256"]
-        path = f"static/tcpstore/{sha256[:2]}/{sha256}"
+        path = f"static/{proto}store/{sha256[:2]}/{sha256}"
         with open(path, "rb") as f:
-            tcp_data = f.read()
-        if data["tcp_data"] and data["tcp_data"][-1][1] == sc and sc == 1:
+            raw_data = f.read()
+        if data["raw_data"] and data["raw_data"][-1][1] == sc and sc == 1:
             # Concat servers messages together
-            data["tcp_data"][-1][0] += tcp_data
+            data["raw_data"][-1][0] += raw_data
         else:
-            data["tcp_data"].append([tcp_data, sc])
+            data["raw_data"].append([raw_data, sc])
 
     context = {"request": request, "data": data, "services": CTF_CONFIG["services"]}
     return templates.TemplateResponse(
-        "tcp-replay.py.jinja2", context, media_type="text/plain"
+        "raw-replay.py.jinja2", context, media_type="text/plain"
     )
 
 
@@ -275,7 +277,7 @@ app = Starlette(
         Route("/api/flow", api_flow_list),
         Route("/api/flow/{flow_id:int}", api_flow_get),
         Route("/api/replay-http/{flow_id:int}", api_replay_http),
-        Route("/api/replay-tcp/{flow_id:int}", api_replay_tcp),
+        Route("/api/replay-raw/{flow_id:int}", api_replay_raw),
         Mount(
             "/static",
             StaticFiles(directory="static", follow_symlink=True),

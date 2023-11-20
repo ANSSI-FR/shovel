@@ -13,7 +13,7 @@ import sys
 import socket
 
 """
-This file was generated from network capture towards {{ data.ip }}.
+This file was generated from network capture towards {{ data.ip }} ({{ data.proto }}).
 Corresponding flow id: {{ data.flow_id }}
 Service: {{ ns.service_name }}
 """
@@ -27,13 +27,17 @@ EXTRA = json.loads(os.getenv("TARGET_EXTRA", "[]"))
 socket.setdefaulttimeout(2)
 
 # Run the actual exploit
+{%- if data.proto == "TCP" %}
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+{%- else %}
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+{%- endif %}
 s.connect((HOST, {{ data.port }}))
 
 # FIXME: You should identify if a flag_id was used in the following
 # payload. If it is the case, then you should loop using EXTRA.
 #for flag_id in EXTRA:
-{%- for payload, server_to_client in data.tcp_data %}
+{%- for payload, server_to_client in data.raw_data %}
 {%- if server_to_client == 0 %}
 
 s.sendall({{ payload | safe }})

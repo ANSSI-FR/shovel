@@ -303,7 +303,7 @@ class FlowDisplay {
       })
       if (promises.length) {
         document.getElementById('display-raw').classList.remove('d-none')
-        document.getElementById('display-raw-replay').href = `api/replay-${proto}/${flowId}`
+        document.getElementById('display-raw-replay').href = `api/replay-raw/${flowId}`
 
         const utf8View = document.getElementById('display-raw-utf8')
         const hexView = document.getElementById('display-raw-hex')
