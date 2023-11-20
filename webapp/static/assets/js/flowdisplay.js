@@ -198,7 +198,7 @@ class FlowDisplay {
       } else {
         document.querySelector('#display-app > header > span > span').textContent = appProto.toUpperCase()
         flow[appProto].forEach(data => {
-          body.textContent += `${JSON.stringify(data)}\n`
+          body.textContent += `${JSON.stringify(data, null, 4)}\n`
         })
       }
     }
