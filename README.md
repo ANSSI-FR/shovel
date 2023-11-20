@@ -43,7 +43,7 @@ Capture files should be splitted into chunks to be progressively imported.
 If the CTF event does not already provide PCAP files, then you can adapt one
 of the following commands for a GNU/Linux system:
 ```bash
-ssh root@10.20.9.6 tcpdump -i wg-faustctf -n -w - 'tcp port not 22' | tcpdump -n -r - -G 30 -w input_pcaps/trace-%Y-%m-%d_%H-%M-%S.pcap
+ssh root@10.20.9.6 tcpdump -i game -n -w - 'tcp port not 22' | tcpdump -n -r - -G 30 -w input_pcaps/trace-%Y-%m-%d_%H-%M-%S.pcap
 ```
 For a Microsoft Windows system, you may adapt the following command (3389 is RDP):
 ```powershell
@@ -53,6 +53,9 @@ For a Microsoft Windows system, you may adapt the following command (3389 is RDP
 ### 2. Launch Suricata and webapp via Docker (option A)
 
 Start Suricata, the web application and Grafana using `docker compose up -d --build`.
+
+By default, all services are only accessible from localhost.
+You should edit `docker-compose.yml` if you want to expose some services to your local network.
 
 Please note that restarting Suricata will cause all network capture files to be loaded again from zero.
 
@@ -68,7 +71,7 @@ export $(grep -vE "^(#.*|\s*)$" .env)
 ```bash
 # Start web app
 export $(grep -vE "^(#.*|\s*)$" .env)
-(cd webapp && uvicorn --host 0.0.0.0 main:app)
+(cd webapp && uvicorn --host 127.0.0.1 main:app)
 ```
 
 Please note that restarting Suricata will cause all network capture files to be loaded again from zero.

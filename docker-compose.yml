@@ -19,7 +19,7 @@ services:
       - "./suricata/output:/suricata/output:ro"
       - "./webapp/database:/webapp/database:rw"
     ports:
-      - 8000:8000
+      - 127.0.0.1:8000:8000
     env_file:
       - .env
 
@@ -29,4 +29,4 @@ services:
     volumes:
       - "./webapp/database:/webapp/database:ro"
     ports:
-      - 3000:3000
+      - 127.0.0.1:3000:3000
