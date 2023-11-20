@@ -6,7 +6,7 @@ services:
     image: shovel-suricata
     volumes:
       - "./input_pcaps:/input_pcaps:ro"
-      - "./suricata/custom.rules:/suricata/custom.rules:ro"
+      - "./suricata/rules:/suricata/rules:ro"
       - "./suricata/output:/suricata/output:rw"
     env_file:
       - .env

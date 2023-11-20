@@ -32,7 +32,7 @@ Moreover, Shovel is batteries-included with Grafana visualizations and some Suri
 ### 0. Before the Capture-the-Flag event begins
 
 Copy `example.env` to `.env` and tweak the configuration parameters.
-Also add the flag format in `suricata/custom.rules` if needed.
+Also add the flag format in `suricata/rules/suricata.rules` if needed.
 
 If you are playing a CTF using an IPv6 network, you might want to [enable IPv6 support in Docker deamon](https://docs.docker.com/config/daemon/ipv6/) before the CTF starts.
 
@@ -86,7 +86,7 @@ as source and destination ports and addresses). See source code:
 
 ### How do I reload rules without rebuilding the database?
 
-You can edit suricata rules in `suricata/custom.rules`, then reload the rules
+You can edit suricata rules in `suricata/rules/suricata.rules`, then reload the rules
 using:
 ```bash
 kill -USR2 $(pidof suricata)
