@@ -195,22 +195,6 @@ class FlowDisplay {
           body.appendChild(linkEl)
           txCount += 1
         })
-      } else if (appProto === 'ssh') {
-        document.querySelector('#display-app > header > span > span').textContent = 'SSH'
-        flow.ssh?.forEach(data => {
-          body.textContent += `${data.client.software_version} (SSH ${data.client.proto_version}) ➔ ${data.server.software_version} (SSH ${data.server.proto_version})\n`
-        })
-      } else if (appProto === 'tls') {
-        document.querySelector('#display-app > header > span > span').textContent = 'TLS'
-        flow.tls?.forEach(data => {
-          body.textContent = `SNI:         ${data.sni}`
-          body.textContent += data.session_resumed ? '\nSession resumed' : ''
-          body.textContent += data.subject ? `\nSubject:     ${data.subject}` : ''
-          body.textContent += data.issuerdn ? `\nIssuerDn:    ${data.issuerdn}` : ''
-          body.textContent += data.fingerprint ? `\nFingerprint: ${data.fingerprint}` : ''
-          body.textContent += data.serial ? `\nSerial:      ${data.serial}` : ''
-          body.textContent += data.notbefore ? `\nValidity from ${data.notbefore} to ${data.notafter}` : ''
-        })
       } else {
         document.querySelector('#display-app > header > span > span').textContent = appProto.toUpperCase()
         flow[appProto].forEach(data => {
