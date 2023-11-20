@@ -23,6 +23,7 @@ nav.nav-flow {
 }
 .filter-dropdown {
   width: 300px;
+  margin-left: -2px !important;
 }
 
 /* Use purple background to show active elements */

@@ -21,6 +21,9 @@
     <symbol id="chevron-down" viewBox="0 0 16 16">
       <path fill='none' stroke='#adb5bd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/>
     </symbol>
+    <symbol id="chevron-right" viewBox="0 0 16 16">
+      <path fill="none" stroke="#adb5bd" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 14 6-6-6-6"/>
+    </symbol>
     <symbol id="clock" viewBox="0 0 16 16">
       <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z" />
     </symbol>
@@ -46,16 +49,16 @@
           </optgroup>
           {%- endfor %}
         </select>
-        <div class="dropdown" id="dropdown-filter">
+        <div class="dropend position-static" id="dropdown-filter">
           <button class="btn text-nowrap rounded-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
             <svg class="bi" width="16" height="16">
               <use xlink:href="#funnel" />
             </svg>
             <svg class="align-baseline" width="16" height="12">
-              <use xlink:href="#chevron-down" />
+              <use xlink:href="#chevron-right" />
             </svg>
           </button>
-          <div class="dropdown-menu p-4 filter-dropdown">
+          <div class="dropdown-menu p-3 filter-dropdown rounded-0">
             <div class="input-group flex-nowrap mb-3">
               <span class="input-group-text">
                 <svg class="bi me-2" width="16" height="16">
