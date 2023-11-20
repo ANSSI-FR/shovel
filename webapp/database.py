@@ -237,7 +237,7 @@ class Database:
         )
         eve_idx, tcp_idx, udp_idx = await cursor.fetchone() or [0, 0, 0]
         if eve_idx == 0:
-            print("Starting initial eve.json import, please be patient...")
+            print("Starting initial eve.json import, please be patient...", flush=True)
 
         # eve.json contains one event per line
         with open("../suricata/output/eve.json", "rb") as f:
@@ -305,7 +305,7 @@ class Database:
                 await self.fill_database()
             except FileNotFoundError:
                 await self.con.execute("ROLLBACK")
-                print("Suricata output not found, retrying in 1s")
+                print("Suricata output not found, retrying in 1s", flush=True)
             except Exception:
                 print(traceback.format_exc(), flush=True)
                 return
