@@ -182,29 +182,46 @@ class FlowDisplay {
     if (appProto && appProto !== 'failed' && flow[appProto] !== undefined) {
       document.getElementById('display-app').classList.remove('d-none')
       document.querySelector('#display-app > header > a').classList.toggle('d-none', appProto !== 'http')
+      document.querySelector('#display-app > header > span > span').textContent = appProto.toUpperCase()
       const body = document.querySelector('#display-app > div > pre')
       body.textContent = ''
       if (appProto === 'http' || appProto === 'http2') {
-        document.querySelector('#display-app > header > span > span').textContent = 'HTTP'
         document.querySelector('#display-app > header > a').href = `api/replay-http/${flowId}`
-        let txCount = 0
+
+        // Print some useful headers
+        const headerUserAgents = new Set()
+        const headerServers = new Set()
+        const headerCookies = new Set()
         flow[appProto].forEach(data => {
-          const linkEl = document.createElement('a')
-          linkEl.classList.add('text-decoration-none')
-          linkEl.href = `#fileinfo-${txCount}`
-          linkEl.textContent = `${data.http_method ?? '?'} http://${data.hostname}:${data.http_port ?? flow.flow.dest_port}${data.url ?? ''}, protocol: ${data.protocol ?? '?'}, response code: ${data.status ?? '?'}\n`
-          body.appendChild(linkEl)
-          txCount += 1
+          data.request_headers?.filter(x => x.name === 'User-Agent')?.forEach(x => headerUserAgents.add(x.value))
+          data.response_headers?.filter(x => x.name === 'Server')?.forEach(x => headerServers.add(x.value))
+          data.request_headers?.filter(x => x.name === 'Cookie')?.forEach(x => headerCookies.add(x.value))
+          data.response_headers?.filter(x => x.name === 'Set-Cookie')?.forEach(x => headerCookies.add(x.value.split(';')[0]))
+        })
+        body.textContent += headerUserAgents.size ? `User-Agent: ${[...headerUserAgents].join(', ')}\n` : ''
+        body.textContent += headerServers.size ? `Server: ${[...headerServers].join(', ')}\n` : ''
+        body.textContent += headerCookies.size ? `Cookie: ${[...headerCookies].join(', ')}\n\n` : '\n'
+
+        // Print requests
+        flow[appProto].forEach((data, txCount) => {
+          const linkEl1 = document.createElement('a')
+          linkEl1.classList.add('text-decoration-none')
+          linkEl1.href = `#fileinfo-${txCount}`
+          linkEl1.textContent = `${data.http_method ?? '?'} `
+          body.appendChild(linkEl1)
+          const spanEl = document.createElement('span')
+          spanEl.textContent = `http://${data.hostname}:${data.http_port ?? flow.flow.dest_port}${data.url ?? ''} ${data.protocol ?? '?'}  ◄ ${data.status ?? '?'}\n`
+          body.appendChild(spanEl)
         })
       } else {
-        document.querySelector('#display-app > header > span > span').textContent = appProto.toUpperCase()
+        // Directly pretty-print Suricata app protocol dissection
         flow[appProto].forEach(data => {
           body.textContent += `${JSON.stringify(data, null, 4)}\n`
         })
       }
     }
 
-    // Fileinfo cards
+    // Fileinfo cards, inside application protocol card
     const fileinfoDiv = document.getElementById('display-fileinfos')
     while (fileinfoDiv.lastChild) {
       fileinfoDiv.removeChild(fileinfoDiv.lastChild)
