@@ -7,15 +7,16 @@
 
 import Api from './api.js'
 
+// These should match defined magics in suricata.rules
 const MAGIC_EXT = {
-  'ASCII text': 'txt',
   'GIF image': 'gif',
-  'HTML document': 'html',
   'JPEG image': 'jpg',
-  'JSON text data': 'json',
   'PDF document': 'pdf',
   'PNG image': 'png',
-  'SVG Scalable Vector Graphics image': 'svg'
+  'SVG Scalable Vector Graphics image': 'svg',
+  'VGM Video Game Music': 'vgm',
+  'Web Open Font': 'woff',
+  'Zip archive': 'zip'
 }
 
 /**
@@ -48,7 +49,7 @@ class FlowDisplay {
 
   /**
    * Get extension from libmagic output
-   * @param {String} magic
+   * @param {String} magic - Value returned by libmagic
    * @returns Extension corresponding to this magic
    */
   getExtFromMagic (magic) {
@@ -57,7 +58,7 @@ class FlowDisplay {
         return ext
       }
     }
-    return 'bin'
+    return 'txt'
   }
 
   /**
@@ -211,7 +212,7 @@ class FlowDisplay {
     flow.fileinfo?.forEach(data => {
       let mainEl
       const fileHref = `static/filestore/${data.sha256.slice(0, 2)}/${data.sha256}`
-      const ext = this.getExtFromMagic(data.magic)
+      const ext = this.getExtFromMagic(data.magic ?? '')
       const cardBtns = document.createElement('span')
       if (['gif', 'jpg', 'png', 'svg'].includes(ext)) {
         mainEl = document.createElement('img')
@@ -225,11 +226,6 @@ class FlowDisplay {
           blob = blob.slice(0, blob.size, 'application/pdf')
           const objectURL = URL.createObjectURL(blob)
           mainEl.src = objectURL
-        })
-      } else if (['html', 'json', 'txt'].includes(ext)) {
-        mainEl = document.createElement('code')
-        fetch(fileHref, {}).then((d) => d.text()).then((d) => {
-          mainEl.textContent = d
         })
       } else {
         // Unknown format, also prepare hexdump view
@@ -271,7 +267,7 @@ class FlowDisplay {
 
       const cardHeader = document.createElement('header')
       cardHeader.classList.add('card-header', 'd-flex', 'justify-content-between')
-      cardHeader.textContent = `File ${data.filename}, ${data.magic}`
+      cardHeader.textContent = data.magic ? `File ${data.filename}, ${data.magic}` : `File ${data.filename}`
       cardHeader.appendChild(cardBtns)
       const cardBody = document.createElement('pre')
       cardBody.classList.add('card-body', 'mb-0')
