@@ -1209,7 +1209,6 @@ security:
       read:
         - /usr/
         - /etc/
-        - /nix/store/9zi80g57g091a5qky6x3cmvmmb9zcfvq-suricata-7.0.0/etc/suricata/
 
   lua:
     # Allow Lua rules. Disabled by default.
