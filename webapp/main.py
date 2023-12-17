@@ -254,10 +254,14 @@ async def lifespan(app):
     Close database on exit.
     """
     await database.connect()
-    await database.update_ctf_config(CTF_CONFIG)
-    db_task = asyncio.create_task(database.importer_task())
-    yield
-    db_task.cancel()
+    if await database.is_readonly():
+        print("SQLite database opened in read-only mode", flush=True)
+        yield
+    else:
+        await database.update_ctf_config(CTF_CONFIG)
+        db_task = asyncio.create_task(database.importer_task())
+        yield
+        db_task.cancel()
     await database.close()
 
 

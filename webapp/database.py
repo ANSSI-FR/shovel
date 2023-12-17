@@ -116,6 +116,15 @@ class Database:
         await self.con.execute("PRAGMA synchronous=normal")
         await self.init_database_structure()
 
+    async def is_readonly(self) -> bool:
+        assert self.con is not None, "database connection closed"
+        try:
+            # This statement has no effects on a writable database
+            await self.con.execute("pragma user_version=0")
+            return False
+        except aiosqlite.OperationalError:
+            return True
+
     async def close(self):
         assert self.con is not None, "database connection closed"
         await self.con.close()
