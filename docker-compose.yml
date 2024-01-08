@@ -3,7 +3,7 @@ version: "3"
 services:
   suricata:
     build: ./suricata
-    image: shovel-suricata
+    image: anssi/shovel-suricata:dev
     volumes:
       - "./input_pcaps:/input_pcaps:ro"
       - "./suricata/rules:/suricata/rules:ro"
@@ -13,7 +13,7 @@ services:
 
   webapp:
     build: ./webapp
-    image: shovel-webapp
+    image: anssi/shovel-webapp:dev
     volumes:
       - "./input_pcaps:/webapp/static/input_pcaps:ro"
       - "./suricata/output:/suricata/output:ro"
@@ -25,7 +25,7 @@ services:
 
   grafana:
     build: ./grafana
-    image: shovel-grafana
+    image: anssi/shovel-grafana:dev
     volumes:
       - "./webapp/database:/webapp/database:ro"
     ports:
