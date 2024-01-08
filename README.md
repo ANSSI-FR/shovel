@@ -92,6 +92,17 @@ using:
 kill -USR2 $(pidof suricata)
 ```
 
+### How can I start the webapp in read-only mode?
+
+A SQLite database is generated in `webapp/database/database.db` on the first run
+of the uvicorn webapp.
+If you want to host a read-only Shovel instance (e.g. after the end of a CTF
+event for further analysis), you may run the webapp in immutable mode using the
+following environment variable:
+```
+DATABASE_URL=file:database/database.db?immutable=1
+```
+
 ## Licensing
 
 Copyright (C) 2023  ANSSI

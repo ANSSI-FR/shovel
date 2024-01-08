@@ -114,7 +114,12 @@ class Database:
         # WAL journal mode allows multiple concurrent readers
         await self.con.execute("PRAGMA journal_mode=wal")
         await self.con.execute("PRAGMA synchronous=normal")
-        await self.init_database_structure()
+        try:
+            await self.init_database_structure()
+        except aiosqlite.OperationalError as e:
+            raise RuntimeError(
+                f"unable to create database '{self.database_uri}'"
+            ) from e
 
     async def is_readonly(self) -> bool:
         assert self.con is not None, "database connection closed"
