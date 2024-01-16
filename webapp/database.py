@@ -264,7 +264,8 @@ class Database:
                     break
                 try:
                     await load_event(self.con, line)
-                except (AttributeError, aiosqlite.OperationalError):
+                except (AttributeError, aiosqlite.OperationalError) as e:
+                    print(f"Partial or malformed eve.json, retrying: {e}", flush=True)
                     break  # eve.json ends with a partial JSON
                 eve_idx += len(line)
                 line_count += 1
