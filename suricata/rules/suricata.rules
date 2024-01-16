@@ -92,7 +92,7 @@ alert ip any any -> $HOME_NET any (msg: "Found LDAP 'givenName='"; flow:to_serve
 alert ip any any -> $HOME_NET any (msg: "Found LDAP 'objectClass='"; flow:to_server; content: "objectClass|3d|"; metadata: tag LDAP FIELD, color warning; sid: 4103;)
 alert ip any any -> $HOME_NET any (msg: "Found LDAP 'userPassword='"; flow:to_server; content: "userPassword|3d|"; metadata: tag LDAP FIELD, color warning; sid: 4104;)
 alert ip any any -> $HOME_NET any (msg: "Found NodeJS serialized function '_$$ND_FUNC$$_'"; flow:to_server; content: "|5f 24 24|ND_FUNC|24 24 5f|"; nocase; metadata: tag NODEJS NDFUNC, color warning; sid: 4151;)
-alert ip any any -> $HOME_NET any (msg: "Found path '/dev/'"; flow:to_server; content: "/dev/"; metadata: tag PATH DEV, color warning; sid: 4201;)
+alert ip any any -> $HOME_NET any (msg: "Found path '/dev/'"; flow:to_server; content: "/dev/"; metadata: tag DEV PATH, color warning; sid: 4201;)
 alert ip any any -> $HOME_NET any (msg: "Found path '/etc/'"; flow:to_server; content: "/etc/"; metadata: tag ETC PATH, color warning; sid: 4202;)
 alert ip any any -> $HOME_NET any (msg: "Found path '/proc/'"; flow:to_server; content: "/proc/"; metadata: tag PROC PATH, color warning; sid: 4203;)
 alert ip any any -> $HOME_NET any (msg: "Found path '/var/lib/'"; flow:to_server; content: "/var/lib/"; metadata: tag VARLIB PATH, color warning; sid: 4204;)
