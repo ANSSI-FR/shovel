@@ -71,7 +71,8 @@ async def load_event(con, line: bytes) -> None:
         app_proto_m = re.search(rb"\"app_proto\":\"([^\"]+)\"", line)
         app_proto = app_proto_m.group(1).decode() if app_proto_m else None
         flow_id = re.search(rb"\"flow_id\":(\d+)", line).group(1).decode()
-        pcap_filename = re.search(rb"\"pcap_filename\":\"([^\"]+)\"", line).group(1)
+        pcap_filename_re = re.search(rb"\"pcap_filename\":\"([^\"]+)\"", line)
+        pcap_filename = pcap_filename_re.group(1) if pcap_filename_re else b""
         assert not app_proto or app_proto in SUPPORTED_PROTOCOLS + [
             "failed"
         ], f"app_proto refers to an unsupported protocol: {app_proto}"
@@ -92,8 +93,9 @@ async def load_event(con, line: bytes) -> None:
     elif event_type in ["alert", "anomaly", "fileinfo"] + SUPPORTED_PROTOCOLS:
         # Collect pcap_filename
         flow_id = re.search(rb"\"flow_id\":(\d+)", line).group(1).decode()
-        pcap_filename = re.search(rb"\"pcap_filename\":\"([^\"]+)\"", line).group(1)
-        flow_pcap[flow_id] = pcap_filename
+        pcap_filename_re = re.search(rb"\"pcap_filename\":\"([^\"]+)\"", line)
+        if pcap_filename_re:
+            flow_pcap[flow_id] = pcap_filename_re.group(1)
 
         # Insert event
         await con.execute(

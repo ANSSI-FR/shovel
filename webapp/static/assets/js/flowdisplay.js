@@ -145,6 +145,7 @@ class FlowDisplay {
     document.getElementById('display-flow').classList.remove('d-none')
     document.querySelector('#display-flow > header > span').textContent = `${flow.flow.proto} flow, ${flow.flow.src_ipport} ➔ ${flow.flow.dest_ipport}`
     document.querySelector('#display-flow > header > a').href = `static/${flow.flow.pcap_filename}`
+    document.querySelector('#display-flow > header > a').classList.toggle('d-none', !flow.flow.pcap_filename)
     const flowBody = document.querySelector('#display-flow > pre')
     flowBody.title = `${flow.flow.ts_start} - ${flow.flow.ts_end}`
     flowBody.textContent = `Tick ${tick}, from ${formatedDateStart} to ${formatedDateEnd}`
