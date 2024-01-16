@@ -122,7 +122,7 @@ outputs:
       #metadata: no
 
       # include the name of the input pcap file in pcap file processing mode
-      pcap-file: true
+      pcap-file: false
 
       # Community Flow ID
       # Adds a 'community_id' field to EVE records. These are meant to give
