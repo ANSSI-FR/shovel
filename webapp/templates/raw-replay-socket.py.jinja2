@@ -9,8 +9,8 @@
 # Filename: replay-{{ ns.service_name }}-{{ data.flow_id }}.py
 import json
 import os
-
-from pwn import *
+import sys
+import socket
 
 """
 This file was generated from network capture towards {{ data.ip }} ({{ data.proto }}).
@@ -23,20 +23,31 @@ Service: {{ ns.service_name }}
 HOST = os.getenv("TARGET_IP")
 EXTRA = json.loads(os.getenv("TARGET_EXTRA", "[]"))
 
-# Connect to remote and run the actual exploit
 # Timeout is important to prevent stall
-r = remote(HOST, {{ data.port }}, typ="{{ data.proto | lower }}", timeout=2)
+socket.setdefaulttimeout(2)
+
+# Run the actual exploit
+{%- if data.proto == "TCP" %}
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+{%- else %}
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+{%- endif %}
+s.connect((HOST, {{ data.port }}))
 
 # FIXME: You should identify if a flag_id was used in the following
 # payload. If it is the case, then you should loop using EXTRA.
-# for flag_id in EXTRA:
+#for flag_id in EXTRA:
 {%- for payload, server_to_client in data.raw_data %}
 {%- if server_to_client == 0 %}
-r.send({{ payload | safe }})
+
+s.sendall({{ payload | safe }})
 {%- else %}
-data = r.recvuntil({{ payload[-16:] | safe }})
+
+data = b""
+while not data.endswith({{ payload[-16:] | safe }}):
+    data += s.recv(1024)
 print(data)
 {%- endif %}
 {%- endfor %}
 
-r.close()
+s.close()
