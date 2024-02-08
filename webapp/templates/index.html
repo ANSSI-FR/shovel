@@ -19,10 +19,10 @@
 <body class="h-100 bg-dark-subtle">
   <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
     <symbol id="chevron-down" viewBox="0 0 16 16">
-      <path fill='none' stroke='#adb5bd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/>
+      <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m2 5 6 6 6-6"/>
     </symbol>
     <symbol id="chevron-right" viewBox="0 0 16 16">
-      <path fill="none" stroke="#adb5bd" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 14 6-6-6-6"/>
+      <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 14 6-6-6-6"/>
     </symbol>
     <symbol id="clock" viewBox="0 0 16 16">
       <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z" />
@@ -33,7 +33,7 @@
   </svg>
 
   <main class="d-flex flex-nowrap h-100" id="app" data-start-date="{{ ctf_config.start_date }}" data-tick-length="{{ ctf_config.tick_length }}">
-    <nav class="d-flex flex-column align-items-stretch flex-shrink-0 bg-dark shadow nav-flow">
+    <nav class="d-flex flex-column align-items-stretch flex-shrink-0 bg-body shadow nav-flow">
       <div class="d-flex flex-nowrap border-bottom">
         <select class="form-select form-select-sm rounded-0 border-0 border-end" id="services-select">
           <option value="" selected>All flows</option>
@@ -87,7 +87,7 @@
         </div>
         <div id="flow-list"></div>
         <div class="d-flex justify-content-center d-none mx-2 mt-2 mb-4" id="flow-list-show-more">
-          <a class="btn btn-dark" href="#">See previous flows</a>
+          <a class="btn btn-secondary" href="#">See previous flows</a>
         </div>
       </div>
     </nav>
@@ -107,7 +107,7 @@
 
       <!-- Flow display -->
       <div>
-        <section class="card m-3 bg-secondary-subtle font-monospace d-none border-info" id="display-flow">
+        <section class="card m-3 bg-body shadow font-monospace d-none border-info" id="display-flow">
           <header class="card-header d-flex justify-content-between">
             <span></span>
             <a class="text-nowrap" href="#" download>Download pcap</a>
@@ -115,10 +115,10 @@
           <pre class="card-body mb-0"></pre>
         </section>
         <section id="display-alerts"></section>
-        <section class="card m-3 bg-secondary-subtle font-monospace d-none border-success" id="display-app">
+        <section class="card m-3 bg-body shadow font-monospace d-none border-success" id="display-app">
           <header class="card-header d-flex justify-content-between">
             <span>
-              <a class="text-decoration-none text-white" data-bs-toggle="collapse" href="#display-app-collapse" role="button" aria-expanded="true" aria-controls="display-app-collapse">
+              <a class="text-reset text-decoration-none" data-bs-toggle="collapse" href="#display-app-collapse" role="button" aria-expanded="true" aria-controls="display-app-collapse">
                 <svg class="bi me-2" width="16" height="16">
                   <use xlink:href="#chevron-down" />
                 </svg>
@@ -132,10 +132,10 @@
             <div id="display-fileinfos"></div>
           </div>
         </section>
-        <section class="card m-3 bg-secondary-subtle font-monospace d-none border-primary" id="display-raw">
+        <section class="card m-3 bg-body shadow font-monospace d-none border-primary" id="display-raw">
           <header class="card-header d-flex justify-content-between">
             <span>
-              <a class="text-decoration-none text-white" data-bs-toggle="collapse" href="#display-raw-collapse" role="button" aria-expanded="true" aria-controls="display-raw-collapse">
+              <a class="text-reset text-decoration-none" data-bs-toggle="collapse" href="#display-raw-collapse" role="button" aria-expanded="true" aria-controls="display-raw-collapse">
                 <svg class="bi me-2" width="16" height="16">
                   <use xlink:href="#chevron-down" />
                 </svg>
