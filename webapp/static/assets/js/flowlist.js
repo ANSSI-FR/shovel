@@ -200,7 +200,7 @@ class FlowList {
     const indicator = document.createElement('span')
     indicator.classList.add('rounded-circle', 'p-1', 'me-1', 'd-inline-block', `bg-${color ?? 'white'}`)
     const badge = document.createElement('span')
-    badge.classList.add('badge', 'rounded-pill', 'border-1', 'border', 'border-light', 'mb-1', 'me-1')
+    badge.classList.add('badge', 'rounded-pill', 'text-bg-secondary', 'mb-1', 'me-1')
     badge.textContent = text
     badge.prepend(indicator)
     return badge
@@ -252,6 +252,7 @@ class FlowList {
       const url = new URL(document.location)
       const activeTags = url.searchParams.getAll('tag')
       const badge = this.tagBadge(tag, color)
+      badge.classList.toggle('text-bg-secondary', !activeTags.includes(tag))
       badge.classList.toggle('text-bg-purple', activeTags.includes(tag))
       const link = document.createElement('a')
       link.href = '#'
