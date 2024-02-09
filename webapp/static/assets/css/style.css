@@ -14,8 +14,10 @@
   box-shadow: none;
 }
 
-/* Disable Bootstrap transition on buttons */
-.btn {
+/* Disable Bootstrap transition on form elements */
+.btn,
+.form-control,
+.form-select {
   transition: none;
 }
 
