@@ -14,6 +14,11 @@
   box-shadow: none;
 }
 
+/* Disable Bootstrap transition on buttons */
+.btn {
+  transition: none;
+}
+
 /* Make flows list user-resizable */
 nav.nav-flow {
   width: 380px;
