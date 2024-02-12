@@ -58,7 +58,7 @@ class FlowList {
     })
 
     // On load more button click, update URL then update flows list
-    document.getElementById('flow-list-show-more').addEventListener('click', async e => {
+    document.getElementById('flow-list-show-older').addEventListener('click', async e => {
       const lastFlowTs = document.getElementById('flow-list').lastElementChild?.dataset.ts_start
       const url = new URL(document.location)
       url.searchParams.set('to', Math.floor(lastFlowTs))
@@ -334,7 +334,7 @@ class FlowList {
     })
 
     // Display a button if we are only displaying 100 flows
-    document.getElementById('flow-list-show-more').classList.toggle('d-none', flows.length !== 100)
+    document.getElementById('flow-list-show-older').classList.toggle('d-none', flows.length !== 100)
   }
 
   /**
@@ -351,7 +351,7 @@ class FlowList {
     // Show loading indicator while waiting for API
     document.getElementById('flow-list-loading-indicator').classList.remove('d-none')
     document.getElementById('flow-list').classList.add('d-none')
-    document.getElementById('flow-list-show-more').classList.add('d-none')
+    document.getElementById('flow-list-show-older').classList.add('d-none')
 
     const url = new URL(document.location)
     const fromTs = url.searchParams.get('from')
