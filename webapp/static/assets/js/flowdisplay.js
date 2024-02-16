@@ -160,7 +160,7 @@ class FlowDisplay {
     flow.alert?.forEach(data => {
       if (data.signature !== 'tag') {
         const cardEl = document.createElement('div')
-        cardEl.classList.add('card', 'm-3', 'bg-secondary-subtle', 'font-monospace', `border-${data.color}`)
+        cardEl.classList.add('card', 'm-3', 'bg-body', 'font-monospace', `border-${data.color}`)
         const cardHeader = document.createElement('div')
         cardHeader.classList.add('card-header')
         cardHeader.textContent = data.signature
@@ -170,7 +170,7 @@ class FlowDisplay {
     })
     flow.anomaly?.forEach(data => {
       const cardEl = document.createElement('div')
-      cardEl.classList.add('card', 'm-3', 'bg-secondary-subtle', 'font-monospace', 'border-warning')
+      cardEl.classList.add('card', 'm-3', 'bg-body', 'font-monospace', 'border-warning')
       const cardHeader = document.createElement('div')
       cardHeader.classList.add('card-header')
       cardHeader.textContent = `Anomaly! ${JSON.stringify(data)}`
