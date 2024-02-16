@@ -38,8 +38,11 @@ r = remote(HOST, {{ data.port }}, typ="{{ data.proto | lower }}", timeout=2)
 r.send({{ payload | safe }})
 {%- else %}
 data = r.recvuntil({{ payload[-16:] | safe }})
-print(data)
 {%- endif %}
 {%- endfor %}
+
+# Use the following to capture all remaining bytes:
+# data = r.recvall(timeout=5)
+# print(data)
 
 r.close()
