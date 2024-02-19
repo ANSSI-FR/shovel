@@ -34,11 +34,15 @@ r = remote(HOST, {{ data.port }}, typ="{{ data.proto | lower }}", timeout=2)
 # payload. If it is the case, then you should loop using EXTRA.
 # for flag_id in EXTRA:
 {%- for payload, server_to_client in data.raw_data %}
-{%- if server_to_client == 0 %}
+{%-   if server_to_client == 0 %}
+{%-     if payload and payload[-1] == 10 %}
+r.sendline({{ payload[:-1] | safe }})
+{%-     else %}
 r.send({{ payload | safe }})
-{%- else %}
+{%-     endif %}
+{%-   else %}
 data = r.recvuntil({{ payload[-16:] | safe }})
-{%- endif %}
+{%-   endif %}
 {%- endfor %}
 
 # Use the following to capture all remaining bytes:
