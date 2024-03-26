@@ -4,6 +4,7 @@
 import asyncio
 import ipaddress
 import json
+import os
 import re
 import traceback
 from functools import lru_cache
@@ -252,59 +253,66 @@ class Database:
             "SELECT eve_idx, tcp_idx, udp_idx FROM checkpoint"
         )
         eve_idx, tcp_idx, udp_idx = await cursor.fetchone() or [0, 0, 0]
-        if eve_idx == 0:
-            print("Starting initial eve.json import, please be patient...", flush=True)
+
+        # Get current log files size, this prevents loading eve events before loading their raw data
+        tcp_size = os.stat("../suricata/output/tcpstore.log").st_size
+        udp_size = os.stat("../suricata/output/udpstore.log").st_size
+        eve_size = os.stat("../suricata/output/eve.json").st_size
+
+        total_size = tcp_size - tcp_idx + udp_size - udp_idx + eve_size - eve_idx
+        if total_size > 0:
+            print(f"Loading {total_size/1024:.03f} kiB of Suricata logs...", flush=True)
+
+        with open("../suricata/output/tcpstore.log", "rb") as f:
+            f.seek(tcp_idx)
+            line_count = 0
+            for line in f:
+                if not line or not line.endswith(b"\n") or f.tell() > tcp_size:
+                    break
+                flow_id, count, server_to_client, h = line.strip().decode().split(",")
+                await self.con.execute(
+                    "INSERT OR IGNORE INTO raw (flow_id, count, server_to_client, "
+                    "sha256) values(?, ?, ?, ?)",
+                    (flow_id, int(count), int(server_to_client), h),
+                )
+                tcp_idx = f.tell()
+                line_count += 1
+        if line_count:
+            print(f"{line_count} chunks loaded from tcpstore.log", flush=True)
+
+        with open("../suricata/output/udpstore.log", "rb") as f:
+            f.seek(udp_idx)
+            line_count = 0
+            for line in f:
+                if not line or not line.endswith(b"\n") or f.tell() > udp_size:
+                    break
+                flow_id, count, server_to_client, h = line.strip().decode().split(",")
+                await self.con.execute(
+                    "INSERT OR IGNORE INTO raw (flow_id, count, server_to_client, "
+                    "sha256) values(?, ?, ?, ?)",
+                    (flow_id, int(count), int(server_to_client), h),
+                )
+                udp_idx = f.tell()
+                line_count += 1
+        if line_count:
+            print(f"{line_count} chunks loaded from udpstore.log", flush=True)
 
         # eve.json contains one event per line
         with open("../suricata/output/eve.json", "rb") as f:
             f.seek(eve_idx)
             line_count = 0
             for line in f:
-                if not line:
+                if not line or f.tell() > eve_size:
                     break
                 try:
                     await load_event(self.con, line)
                 except (AttributeError, aiosqlite.OperationalError) as e:
                     print(f"Partial or malformed eve.json, retrying: {e}", flush=True)
                     break  # eve.json ends with a partial JSON
-                eve_idx += len(line)
+                eve_idx = f.tell()
                 line_count += 1
         if line_count:
             print(f"{line_count} events loaded from eve.json", flush=True)
-
-        with open("../suricata/output/tcpstore.log", "r") as f:
-            f.seek(tcp_idx)
-            line_count = 0
-            for line in f:
-                if not line or not line.endswith("\n"):
-                    break
-                flow_id, count, server_to_client, h = line.strip().split(",")
-                await self.con.execute(
-                    "INSERT OR IGNORE INTO raw (flow_id, count, server_to_client, "
-                    "sha256) values(?, ?, ?, ?)",
-                    (flow_id, int(count), int(server_to_client), h),
-                )
-                tcp_idx += len(line)
-                line_count += 1
-        if line_count:
-            print(f"{line_count} chunks loaded from tcpstore.log", flush=True)
-
-        with open("../suricata/output/udpstore.log", "r") as f:
-            f.seek(udp_idx)
-            line_count = 0
-            for line in f:
-                if not line or not line.endswith("\n"):
-                    break
-                flow_id, count, server_to_client, h = line.strip().split(",")
-                await self.con.execute(
-                    "INSERT OR IGNORE INTO raw (flow_id, count, server_to_client, "
-                    "sha256) values(?, ?, ?, ?)",
-                    (flow_id, int(count), int(server_to_client), h),
-                )
-                udp_idx += len(line)
-                line_count += 1
-        if line_count:
-            print(f"{line_count} chunks loaded from udpstore.log", flush=True)
 
         await self.con.execute(
             "INSERT OR REPLACE INTO checkpoint (id, eve_idx, tcp_idx, udp_idx) "
