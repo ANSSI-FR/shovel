@@ -147,7 +147,7 @@ async def api_flow_get(request):
     rows = await cursor.fetchall()
     result["raw"] = [dict(f) for f in rows]
 
-    return JSONResponse(result)
+    return JSONResponse(result, headers={"Cache-Control": "max-age=86400"})
 
 
 async def api_replay_http(request):
