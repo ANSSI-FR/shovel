@@ -299,50 +299,37 @@ class FlowDisplay {
     })
 
     // Raw data card
-    const proto = flow.flow.proto.toLowerCase()
-    if (proto === 'tcp' || proto === 'udp') {
-      const promises = flow.raw.map(async (data) => {
-        // TODO: automatically switch to hex view when the UTF-8 is invalid
-        let d = await fetch(`static/${proto}store/${data.sha256.slice(0, 2)}/${data.sha256}`, {})
-        d = await d.arrayBuffer()
-        const byteArray = new Uint8Array(d)
+    if (['TCP', 'UDP'].includes(flow.flow.proto)) {
+      document.getElementById('display-raw').classList.remove('d-none')
+      document.getElementById('display-raw-replay').href = `api/replay-raw/${flowId}`
+
+      // Display loading indicator before sending HTTP request
+      const utf8View = document.getElementById('display-raw-utf8')
+      const hexView = document.getElementById('display-raw-hex')
+      utf8View.textContent = 'Loading...'
+      hexView.textContent = 'Loading...'
+
+      const chunks = await this.apiClient.getFlowRaw(flowId)
+      utf8View.textContent = ''
+      hexView.textContent = ''
+      chunks.forEach(chunk => {
+        const byteArray = Uint8Array.from(atob(chunk.data), c => c.charCodeAt(0))
         const utf8Decoder = new TextDecoder()
-        return {
-          data: {
-            utf8: utf8Decoder.decode(byteArray),
-            hex: this.renderHexDump(byteArray)
-          },
-          direction: data.server_to_client
-        }
+
+        const codeElUtf8 = document.createElement('code')
+        codeElUtf8.classList.add('text-white')
+        codeElUtf8.classList.toggle('bg-danger', chunk.server_to_client === 0)
+        codeElUtf8.classList.toggle('bg-success', chunk.server_to_client === 1)
+        codeElUtf8.textContent = utf8Decoder.decode(byteArray)
+        utf8View.appendChild(codeElUtf8)
+
+        const codeElHex = document.createElement('code')
+        codeElHex.classList.add('text-white')
+        codeElHex.classList.toggle('bg-danger', chunk.server_to_client === 0)
+        codeElHex.classList.toggle('bg-success', chunk.server_to_client === 1)
+        codeElHex.textContent = this.renderHexDump(byteArray)
+        hexView.appendChild(codeElHex)
       })
-      if (promises.length) {
-        document.getElementById('display-raw').classList.remove('d-none')
-        document.getElementById('display-raw-replay').href = `api/replay-raw/${flowId}`
-
-        const utf8View = document.getElementById('display-raw-utf8')
-        const hexView = document.getElementById('display-raw-hex')
-        utf8View.textContent = 'Loading...'
-        hexView.textContent = 'Loading...'
-        Promise.all(promises).then(results => {
-          utf8View.textContent = ''
-          hexView.textContent = ''
-          results.forEach(e => {
-            const codeElUtf8 = document.createElement('code')
-            codeElUtf8.classList.add('text-white')
-            codeElUtf8.classList.toggle('bg-danger', e.direction === 0)
-            codeElUtf8.classList.toggle('bg-success', e.direction === 1)
-            codeElUtf8.textContent = e.data.utf8
-            utf8View.appendChild(codeElUtf8)
-
-            const codeElHex = document.createElement('code')
-            codeElHex.classList.add('text-white')
-            codeElHex.classList.toggle('bg-danger', e.direction === 0)
-            codeElHex.classList.toggle('bg-success', e.direction === 1)
-            codeElHex.textContent = e.data.hex
-            hexView.appendChild(codeElHex)
-          })
-        })
-      }
     }
   }
 }

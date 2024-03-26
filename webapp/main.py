@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 
 import asyncio
+import base64
 import contextlib
 import json
 
@@ -139,13 +140,30 @@ async def api_flow_get(request):
         rows = await cursor.fetchall()
         result["alert"] = [row_to_dict(f) for f in rows]
 
-    # Get associated TCP/UDP raw data
+    return JSONResponse(result, headers={"Cache-Control": "max-age=86400"})
+
+
+async def api_flow_raw_get(request):
+    flow_id = request.path_params["flow_id"]
+
+    # Query flow from database to get proto
+    cursor = await database.execute("SELECT proto FROM flow WHERE id = ?", [flow_id])
+    flow = await cursor.fetchone()
+    if not flow:
+        raise HTTPException(404)
+    basepath = "static/{}store/".format(flow["proto"].lower())
+
+    # Get associated raw data
     cursor = await database.execute(
         "SELECT server_to_client, sha256 FROM raw WHERE flow_id = ? ORDER BY count",
         [flow_id],
     )
     rows = await cursor.fetchall()
-    result["raw"] = [dict(f) for f in rows]
+    result = []
+    for r in rows:
+        with open("{}/{}/{}".format(basepath, r["sha256"][:2], r["sha256"]), "rb") as f:
+            data = base64.b64encode(f.read()).decode()
+        result.append({"server_to_client": r["server_to_client"], "data": data})
 
     return JSONResponse(result, headers={"Cache-Control": "max-age=86400"})
 
@@ -280,6 +298,7 @@ app = Starlette(
         Route("/", index),
         Route("/api/flow", api_flow_list),
         Route("/api/flow/{flow_id:int}", api_flow_get),
+        Route("/api/flow/{flow_id:int}/raw", api_flow_raw_get),
         Route("/api/replay-http/{flow_id:int}", api_replay_http),
         Route("/api/replay-raw/{flow_id:int}", api_replay_raw),
         Mount(

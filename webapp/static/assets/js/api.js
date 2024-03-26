@@ -61,4 +61,19 @@ export default class Api {
     const data = await response.json()
     return data
   }
+
+  /**
+   * Call API to get flow raw data from identifier
+   *
+   * @param {Number} flowId Flow identifier
+   */
+  async getFlowRaw (flowId) {
+    const response = await fetch(`api/flow/${flowId}/raw`, {})
+    if (!response.ok) {
+      throw Error('failed to get flow raw data')
+    }
+
+    const data = await response.json()
+    return data
+  }
 }
