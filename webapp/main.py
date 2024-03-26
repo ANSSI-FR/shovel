@@ -5,7 +5,6 @@
 import asyncio
 import contextlib
 import json
-import logging
 
 from starlette.applications import Starlette
 from starlette.config import Config
@@ -17,13 +16,6 @@ from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
 from database import Database
-
-
-class StaticEndpointsFilter(logging.Filter):
-    # Reduce log spam by ignoring /tcpstore/ and /udpstore/ access logs
-    def filter(self, record: logging.LogRecord) -> bool:
-        msg = record.getMessage()
-        return "GET /tcpstore/" not in msg and "GET /udpstore/" not in msg
 
 
 def row_to_dict(row) -> dict:
@@ -282,7 +274,6 @@ for name in service_names:
 # Define web application
 database = Database(DATABASE_URL)
 templates = Jinja2Templates(directory="templates")
-logging.getLogger("uvicorn.access").addFilter(StaticEndpointsFilter())
 app = Starlette(
     debug=DEBUG,
     routes=[
