@@ -143,14 +143,13 @@ class Database:
 
     async def init_database_structure(self):
         assert self.con is not None, "database connection closed"
-        # TODO: when SQLite 3.42 is broadly available, use UNIXEPOCH('subsec')
         await self.con.executescript(
             """
             CREATE TABLE IF NOT EXISTS ctf_config (
                 id INTEGER PRIMARY KEY,
                 start_date TEXT,
                 ts_start INTEGER GENERATED ALWAYS
-                    AS ((JULIANDAY(start_date) - 2440587.5) * 86400000),
+                    AS (UNIXEPOCH(start_date, 'subsec') * 1000),
                 tick_length INTEGER,
                 services TEXT
             );
@@ -163,11 +162,9 @@ class Database:
             CREATE TABLE IF NOT EXISTS flow (
                 id INTEGER NOT NULL PRIMARY KEY,
                 ts_start INTEGER GENERATED ALWAYS
-                    AS ((JULIANDAY(SUBSTR((extra_data->>'start'), 1, 26))
-                    - 2440587.5) * 86400000) STORED,
+                    AS (UNIXEPOCH(SUBSTR(extra_data->>'start', 1, 26), 'subsec') * 1000) STORED,
                 ts_end INTEGER GENERATED ALWAYS
-                    AS ((JULIANDAY(SUBSTR((extra_data->>'end'), 1, 26))
-                    - 2440587.5) * 86400000) STORED,
+                    AS (UNIXEPOCH(SUBSTR(extra_data->>'end', 1, 26), 'subsec') * 1000) STORED,
                 src_ip TEXT NOT NULL,
                 src_port INTEGER,
                 src_ipport TEXT GENERATED ALWAYS
@@ -210,8 +207,7 @@ class Database:
                     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                     flow_id INTEGER NOT NULL,
                     timestamp INTEGER GENERATED ALWAYS
-                        AS ((JULIANDAY(SUBSTR((extra_data->>'timestamp'), 1, 26))
-                        - 2440587.5) * 86400000) STORED,
+                        AS (UNIXEPOCH(SUBSTR(extra_data->>'timestamp', 1, 26), 'subsec') * 1000) STORED,
                     extra_data TEXT,
                     FOREIGN KEY(flow_id) REFERENCES flow (id),
                     UNIQUE(flow_id, timestamp)
