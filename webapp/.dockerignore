@@ -1,3 +1,5 @@
+# Copyright (C) 2024  ANSSI
+# SPDX-License-Identifier: CC0-1.0
 __pycache__
 .env
 .ruff_cache

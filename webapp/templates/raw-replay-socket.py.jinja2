@@ -1,4 +1,8 @@
-{# Get service name from dest_ipport #}
+{#
+  Copyright (C) 2024  ANSSI
+  SPDX-License-Identifier: GPL-3.0-only
+#}
+{#- Get service name from dest_ipport #}
 {%- set ns = namespace(service_name="unknown") %}
 {%- for name, ipaddr_ports in services.items() %}
 {%- if data.dest_ipport in ipaddr_ports %}

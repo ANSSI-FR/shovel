@@ -1,4 +1,8 @@
-{# Get service name from hostname:port #}
+{#
+  Copyright (C) 2024  ANSSI
+  SPDX-License-Identifier: GPL-3.0-only
+#}
+{#- Get service name from hostname:port #}
 {%- set ns = namespace(service_name="unknown") %}
 {%- for name, ipaddr_ports in services.items() %}
 {%- if (data[0].hostname + ":" + ((data[0].http_port or 80) | string)) in ipaddr_ports %}

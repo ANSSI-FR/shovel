@@ -31,7 +31,7 @@ async def index(request):
         "request": request,
         "ctf_config": CTF_CONFIG,
     }
-    return templates.TemplateResponse("index.html", context)
+    return templates.TemplateResponse("index.html.jinja2", context)
 
 
 async def api_flow_list(request):

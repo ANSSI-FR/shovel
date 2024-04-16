@@ -1,6 +1,11 @@
 'use strict'
 /* eslint-env browser */
 
+/*
+ * Copyright (C) 2024  ANSSI
+ * SPDX-License-Identifier: GPL-3.0-only
+ */
+
 /**
  * Get user preferred theme from their past choice or browser
  * @returns {String} User preferred theme

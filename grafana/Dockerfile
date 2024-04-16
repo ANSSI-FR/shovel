@@ -1,3 +1,5 @@
+# Copyright (C) 2024  ANSSI
+# SPDX-License-Identifier: CC0-1.0
 FROM grafana/grafana-oss:10.1.2
 ENV GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES=false \
     GF_ANALYTICS_CHECK_FOR_UPDATES=false \
