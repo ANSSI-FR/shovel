@@ -100,8 +100,8 @@ async def load_event(con, line: bytes) -> None:
 
         # Insert event
         await con.execute(
-            f"INSERT OR IGNORE INTO '{event_type}' (flow_id, extra_data) "
-            f"values(?1->>'flow_id', ?1->'{event_type}')",
+            f"INSERT OR IGNORE INTO '{event_type}' (flow_id, timestamp, extra_data) "
+            f"values(?1->>'flow_id', (UNIXEPOCH(SUBSTR(?1->>'timestamp', 1, 26), 'subsec') * 1000), ?1->'{event_type}')",
             (line,),
         )
 
@@ -185,6 +185,7 @@ class Database:
                     AS (extra_data->>'metadata.tag[0]') STORED,
                 color TEXT GENERATED ALWAYS
                     AS (extra_data->>'metadata.color[0]') STORED,
+                timestamp INTEGER NOT NULL,
                 extra_data TEXT,
                 FOREIGN KEY(flow_id) REFERENCES flow (id),
                 UNIQUE(flow_id, tag)
@@ -206,8 +207,7 @@ class Database:
                 CREATE TABLE IF NOT EXISTS "{e}" (
                     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                     flow_id INTEGER NOT NULL,
-                    timestamp INTEGER GENERATED ALWAYS
-                        AS (UNIXEPOCH(SUBSTR(extra_data->>'timestamp', 1, 26), 'subsec') * 1000) STORED,
+                    timestamp INTEGER NOT NULL,
                     extra_data TEXT,
                     FOREIGN KEY(flow_id) REFERENCES flow (id),
                     UNIQUE(flow_id, timestamp)
