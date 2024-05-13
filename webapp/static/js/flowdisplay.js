@@ -144,7 +144,7 @@ class FlowDisplay {
     // Flow card
     document.getElementById('display-flow').classList.remove('d-none')
     document.querySelector('#display-flow > header > span').textContent = `${flow.flow.proto} flow, ${flow.flow.src_ipport} ➔ ${flow.flow.dest_ipport}`
-    document.querySelector('#display-flow > header > a').href = `static/${flow.flow.pcap_filename}`
+    document.querySelector('#display-flow > header > a').href = flow.flow.pcap_filename
     document.querySelector('#display-flow > header > a').classList.toggle('d-none', !flow.flow.pcap_filename)
     const flowBody = document.querySelector('#display-flow > pre')
     flowBody.title = `${flow.flow.ts_start} - ${flow.flow.ts_end}`
@@ -229,7 +229,7 @@ class FlowDisplay {
     }
     flow.fileinfo?.forEach(data => {
       let mainEl
-      const fileHref = `static/filestore/${data.sha256.slice(0, 2)}/${data.sha256}`
+      const fileHref = `filestore/${data.sha256.slice(0, 2)}/${data.sha256}`
       const ext = this.getExtFromMagic(data.magic ?? '')
       const cardBtns = document.createElement('span')
       if (['gif', 'jpg', 'png', 'svg'].includes(ext)) {

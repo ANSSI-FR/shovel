@@ -24,4 +24,4 @@ jobs:
         with:
           node-version: '*'
       - run: npm install standard
-      - run: npx standard ./webapp/static/assets
+      - run: npx standard ./webapp/static

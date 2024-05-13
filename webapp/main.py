@@ -197,7 +197,7 @@ async def api_replay_http(request):
                 raise HTTPException(500)
 
             # Load file
-            path = f"static/filestore/{sha256[:2]}/{sha256}"
+            path = f"../suricata/output/filestore/{sha256[:2]}/{sha256}"
             with open(path, "rb") as f:
                 req["rq_content"] = f.read()
         data.append(req)
@@ -320,8 +320,15 @@ app = Starlette(
         Route("/api/replay-raw/{flow_id:int}", api_replay_raw),
         Mount(
             "/static",
-            StaticFiles(directory="static", follow_symlink=True),
-            name="static",
+            StaticFiles(directory="static"),
+        ),
+        Mount(
+            "/input_pcaps",
+            StaticFiles(directory="../input_pcaps"),
+        ),
+        Mount(
+            "/filestore",
+            StaticFiles(directory="../suricata/output/filestore"),
         ),
     ],
     lifespan=lifespan,
