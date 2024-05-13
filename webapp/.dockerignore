@@ -3,5 +3,4 @@
 __pycache__
 .env
 .ruff_cache
-database
 grafana

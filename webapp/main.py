@@ -2,7 +2,6 @@
 # Copyright (C) 2023-2024  ANSSI
 # SPDX-License-Identifier: GPL-3.0-only
 
-import asyncio
 import base64
 import contextlib
 import json
@@ -17,8 +16,6 @@ from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
-
-from database import Database
 
 
 def row_to_dict(row: aiosqlite.Row) -> dict:
@@ -69,19 +66,19 @@ async def api_flow_list(request):
         """
     query += " ORDER BY ts_start DESC LIMIT 100"
 
-    cursor = await database.execute(
+    cursor = await eve_database.execute(
         query, (json.dumps(services), json.dumps(tags), int(ts_to) * 1000, app_proto)
     )
     rows = await cursor.fetchall()
     flows = [dict(row) for row in rows]
 
     # Fetch application protocols
-    cursor = await database.execute("SELECT DISTINCT app_proto FROM flow")
+    cursor = await eve_database.execute("SELECT DISTINCT app_proto FROM flow")
     rows = await cursor.fetchall()
     prs = [r["app_proto"] for r in rows if r["app_proto"] not in [None, "failed"]]
 
     # Fetch tags
-    cursor = await database.execute(
+    cursor = await eve_database.execute(
         "SELECT tag, color FROM alert GROUP BY tag ORDER BY color"
     )
     rows = await cursor.fetchall()
@@ -100,7 +97,7 @@ async def api_flow_get(request):
     flow_id = request.path_params["flow_id"]
 
     # Query flow from database
-    cursor = await database.execute(
+    cursor = await eve_database.execute(
         (
             "SELECT id, ts_start, ts_end, src_ipport, dest_ipport, dest_port, "
             "pcap_filename, proto, app_proto, extra_data "
@@ -117,7 +114,7 @@ async def api_flow_get(request):
     # Get associated fileinfo
     # See https://docs.suricata.io/en/suricata-6.0.9/file-extraction/file-extraction.html
     if app_proto in ["http", "http2", "smtp", "ftp", "nfs", "smb"]:
-        cursor = await database.execute(
+        cursor = await eve_database.execute(
             "SELECT extra_data FROM fileinfo WHERE flow_id = ? ORDER BY id", [flow_id]
         )
         rows = await cursor.fetchall()
@@ -126,16 +123,16 @@ async def api_flow_get(request):
     # Get associated protocol metadata
     if app_proto and app_proto != "failed":
         q_proto = app_proto if app_proto != "http2" else "http"
-        cursor = await database.execute(
-            f"SELECT extra_data FROM {q_proto} WHERE flow_id = ? ORDER BY id",
-            [flow_id],
+        cursor = await eve_database.execute(
+            "SELECT extra_data FROM 'app-event' WHERE flow_id = ? AND app_proto = ? ORDER BY id",
+            [flow_id, q_proto],
         )
         rows = await cursor.fetchall()
         result[app_proto] = [row_to_dict(f) for f in rows]
 
     # Get associated alert
     if result["flow"]["alerted"]:
-        cursor = await database.execute(
+        cursor = await eve_database.execute(
             "SELECT extra_data, color FROM alert WHERE flow_id = ? ORDER BY id",
             [flow_id],
         )
@@ -149,7 +146,9 @@ async def api_flow_raw_get(request):
     flow_id = request.path_params["flow_id"]
 
     # Query flow from database to get proto
-    cursor = await database.execute("SELECT proto FROM flow WHERE id = ?", [flow_id])
+    cursor = await eve_database.execute(
+        "SELECT proto FROM flow WHERE id = ?", [flow_id]
+    )
     flow = await cursor.fetchone()
     if not flow:
         raise HTTPException(404)
@@ -172,8 +171,8 @@ async def api_replay_http(request):
     flow_id = request.path_params["flow_id"]
 
     # Get HTTP events
-    cursor = await database.execute(
-        "SELECT flow_id, extra_data FROM http WHERE flow_id = ? ORDER BY id",
+    cursor = await eve_database.execute(
+        "SELECT flow_id, extra_data FROM 'app-event' WHERE flow_id = ? AND app_proto = 'http' ORDER BY id",
         [flow_id],
     )
     rows = await cursor.fetchall()
@@ -185,7 +184,7 @@ async def api_replay_http(request):
         req["rq_content"] = None
         if req["http_method"] in ["POST"]:
             # Get associated fileinfo
-            cursor = await database.execute(
+            cursor = await eve_database.execute(
                 "SELECT extra_data FROM fileinfo WHERE flow_id = ? ORDER BY id",
                 [flow_id],
             )
@@ -212,7 +211,7 @@ async def api_replay_raw(request):
     flow_id = request.path_params["flow_id"]
 
     # Get flow event
-    cursor = await database.execute(
+    cursor = await eve_database.execute(
         "SELECT dest_ipport, proto FROM flow WHERE id = ?",
         [flow_id],
     )
@@ -270,28 +269,23 @@ async def open_database(database_uri: str, text_factory=str) -> aiosqlite.Connec
 @contextlib.asynccontextmanager
 async def lifespan(app):
     """
-    Open databases on startup and launch importer in background.
+    Open databases on startup.
     Close databases on exit.
     """
-    global payload_database
+    global eve_database, payload_database
+    eve_database = await open_database(EVE_DB_URI)
     payload_database = await open_database(PAYLOAD_DB_URI, bytes)
-    await database.connect()
-    if await database.is_readonly():
-        print("SQLite database opened in read-only mode", flush=True)
-        yield
-    else:
-        await database.update_ctf_config(CTF_CONFIG)
-        db_task = asyncio.create_task(database.importer_task())
-        yield
-        db_task.cancel()
+    yield
+    await eve_database.close()
     await payload_database.close()
-    await database.close()
 
 
 # Load configuration from environment variables, then .env file
 config = Config(".env")
 DEBUG = config("DEBUG", cast=bool, default=False)
-DATABASE_URL = config("DATABASE_URL", cast=str, default="file:database/database.db")
+EVE_DB_URI = config(
+    "EVE_DB_URI", cast=str, default="file:../suricata/output/eve.db?mode=ro"
+)
 PAYLOAD_DB_URI = config(
     "PAYLOAD_DB_URI", cast=str, default="file:../suricata/output/payload.db?mode=ro"
 )
@@ -306,7 +300,7 @@ for name in service_names:
     CTF_CONFIG["services"][name] = list(ipports)
 
 # Define web application
-database = Database(DATABASE_URL)
+eve_database = None
 payload_database = None
 templates = Jinja2Templates(directory="templates")
 app = Starlette(

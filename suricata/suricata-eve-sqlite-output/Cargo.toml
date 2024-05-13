@@ -1,0 +1,17 @@
+# Copyright (C) 2024  ANSSI
+# SPDX-License-Identifier: CC0-1.0
+
+[package]
+name = "suricata-eve-sqlite-output"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+name = "eve_sqlite_output"
+
+[dependencies]
+lazy_static = "1.4.0"
+regex = "~1.5.5"
+rusqlite = { version = "0.31.0", features = ["bundled"] }
+suricata = "8.0.0-alpha.1"

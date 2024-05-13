@@ -2,12 +2,11 @@
 # SPDX-License-Identifier: CC0-1.0
 input_pcaps/*
 suricata/output/filestore
-suricata/output/*.json
 suricata/output/*.log
 suricata/output/*.db
 suricata/output/*.db-shm
 suricata/output/*.db-wal
-webapp/database/*
+suricata/suricata-eve-sqlite-output/target
 .env
 
 # Python

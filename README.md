@@ -20,8 +20,7 @@ Compared to these traffic analyser tools, Shovel relies on Suricata while making
 some opinionated choices for the frontend. This has a few nice implications:
 
   - dissection of all application protocols already supported by Suricata (TCP and UDP),
-  - use a single SQLite database,
-  - on disk TCP/UDP/HTTP payload deduplication,
+  - flows payloads and dissections are stored inside SQLite databases for fast queries,
   - filters based on libmagic, e.g. quickly filter flows containing PDF documents or PNG images,
   - no heavy build tools needed, Shovel is easy to tweak.
 
@@ -57,7 +56,8 @@ Start Suricata, the web application and Grafana using `docker compose up -d --bu
 By default, all services are only accessible from localhost.
 You should edit `docker-compose.yml` if you want to expose some services to your local network.
 
-Please note that restarting Suricata will cause all network capture files to be loaded again from zero.
+Please note that restarting Suricata will cause all network capture files to be loaded again.
+This is fine, but it might add some delay before observing new flows.
 
 ### 2. Launch Suricata and webapp traditionally (option B)
 
@@ -74,7 +74,8 @@ export $(grep -vE "^(#.*|\s*)$" .env)
 (cd webapp && uvicorn --host 127.0.0.1 main:app)
 ```
 
-Please note that restarting Suricata will cause all network capture files to be loaded again from zero.
+Please note that restarting Suricata will cause all network capture files to be loaded again.
+This is fine, but it might add some delay before observing new flows.
 
 ## Frequently Asked Questions
 
@@ -84,23 +85,12 @@ Please note that restarting Suricata will cause all network capture files to be 
 as source and destination ports and addresses). See source code:
 <https://github.com/OISF/suricata/blob/suricata-6.0.13/src/flow.h#L680>.
 
-### How do I reload rules without rebuilding the database?
+### How do I reload rules without restarting Suricata?
 
 You can edit suricata rules in `suricata/rules/suricata.rules`, then reload the rules
 using:
 ```bash
 kill -USR2 $(pidof suricata)
-```
-
-### How can I start the webapp in read-only mode?
-
-A SQLite database is generated in `webapp/database/database.db` on the first run
-of the uvicorn webapp.
-If you want to host a read-only Shovel instance (e.g. after the end of a CTF
-event for further analysis), you may run the webapp in immutable mode using the
-following environment variable:
-```
-DATABASE_URL=file:database/database.db?immutable=1
 ```
 
 ## Licensing

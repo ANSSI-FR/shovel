@@ -20,7 +20,6 @@ services:
     volumes:
       - "./input_pcaps:/webapp/static/input_pcaps:ro"
       - "./suricata/output:/suricata/output:ro"
-      - "./webapp/database:/webapp/database:rw"
     ports:
       - 127.0.0.1:8000:8000
     env_file:

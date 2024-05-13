@@ -76,7 +76,7 @@ stats:
 
 # Plugins -- Experimental -- specify the filename for each plugin shared object
 plugins:
-#   - /path/to/plugin.so
+  - suricata/libeve_sqlite_output.so
 
 # Configure the type of alert (and other) logging you would like.
 outputs:
@@ -90,8 +90,8 @@ outputs:
   # Extensible Event Format (nicknamed EVE) event log in JSON format
   - eve-log:
       enabled: yes
-      filetype: regular #regular|syslog|unix_dgram|unix_stream|redis
-      filename: eve.json
+      filetype: sqlite #regular|syslog|unix_dgram|unix_stream|redis
+      filename: suricata/output/eve.db
       # Enable for multi-threaded eve.json output; output files are amended with
       # an identifier, e.g., eve.9.json
       #threaded: false
