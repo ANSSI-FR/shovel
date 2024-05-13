@@ -1,5 +1,5 @@
 # Copyright (C) 2023  ANSSI
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 # Suricata rules for Attack-Defense CTF games
 # Please remember to increment `sid` when adding new rules as its value must be unique.

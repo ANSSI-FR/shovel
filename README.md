@@ -1,5 +1,10 @@
 # Shovel
 
+<!--
+Copyright (C) 2023-2024  ANSSI
+SPDX-License-Identifier: CC0-1.0
+-->
+
 Shovel is a web application that offers a graphical user interface to explore
 [Suricata EVE outputs](https://docs.suricata.io/en/suricata-7.0.1/output/eve/eve-json-output.html).
 Its primary focus is to help [Capture-the-Flag players](https://en.wikipedia.org/wiki/Capture_the_flag_(cybersecurity))
@@ -92,13 +97,3 @@ using:
 ```bash
 kill -USR2 $(pidof suricata)
 ```
-
-## Licensing
-
-Copyright (C) 2023  ANSSI
-
-Shovel is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3.
-
-Shovel is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with Shovel. If not, see <https://www.gnu.org/licenses/>.
