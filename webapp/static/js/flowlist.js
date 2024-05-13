@@ -129,6 +129,22 @@ class FlowList {
       this.update()
     })
 
+    // On glob search filter submit, update URL then update flows list
+    document.getElementById('filter-search').addEventListener('keyup', e => {
+      if (e.key !== 'Enter') {
+        return
+      }
+      const search = e.target.value
+      const url = new URL(document.location)
+      if (search) {
+        url.searchParams.set('search', search)
+      } else {
+        url.searchParams.delete('search')
+      }
+      window.history.pushState(null, '', url.href)
+      this.update()
+    })
+
     // On tags filter change, update URL then update flows list
     document.getElementById('filter-tag').addEventListener('click', e => {
       const tag = e.target.closest('a')?.dataset.tag
@@ -358,14 +374,21 @@ class FlowList {
     const toTs = url.searchParams.get('to')
     const services = url.searchParams.getAll('service')
     const filterAppProto = url.searchParams.get('app_proto')
+    const filterSearch = url.searchParams.get('search')
     const filterTags = url.searchParams.getAll('tag')
     const { flows, appProto, tags } = await this.apiClient.listFlows(
       fromTs ? Number(fromTs) : null,
       toTs ? Number(toTs) : null,
       services,
       filterAppProto,
+      filterSearch,
       filterTags
     )
+
+    // Update search input
+    const searchInput = document.getElementById('filter-search')
+    searchInput.value = filterSearch ?? ''
+    searchInput.classList.toggle('is-active', filterSearch !== null)
 
     await this.updateProtocolFilter(appProto)
     this.updateTagFilter(tags)
@@ -373,7 +396,7 @@ class FlowList {
     this.updateActiveFlow()
 
     // Update filter dropdown visual indicator
-    document.querySelector('#dropdown-filter > button').classList.toggle('text-bg-purple', toTs || filterTags.length || filterAppProto)
+    document.querySelector('#dropdown-filter > button').classList.toggle('text-bg-purple', toTs || filterTags.length || filterAppProto || filterSearch)
 
     // Update service filter select state
     document.getElementById('services-select').value = services.join(',')

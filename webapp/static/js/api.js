@@ -19,9 +19,10 @@ export default class Api {
    * @param {Number} timestampTo Keep only flows before this timestamp
    * @param {Array} services Keep only flows matching these IP address and ports
    * @param {String} appProto Keep only flows matching this app-layer protocol
+   * @param {String} search Search for this glob pattern in flows payloads
    * @param {Array} tags Keep only flows matching these tags
    */
-  async listFlows (timestampFrom, timestampTo, services, appProto, tags) {
+  async listFlows (timestampFrom, timestampTo, services, appProto, search, tags) {
     const url = new URL(`${location.origin}${location.pathname}api/flow`)
     if (typeof timestampFrom === 'number') {
       url.searchParams.append('from', timestampFrom)
@@ -34,6 +35,9 @@ export default class Api {
     })
     if (appProto) {
       url.searchParams.append('app_proto', appProto)
+    }
+    if (search) {
+      url.searchParams.append('search', search)
     }
     tags?.forEach((t) => {
       url.searchParams.append('tag', t)

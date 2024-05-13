@@ -38,6 +38,7 @@ async def api_flow_list(request):
     ts_to = request.query_params.get("to", str(int(1e10)))
     services = request.query_params.getlist("service")
     app_proto = request.query_params.get("app_proto")
+    search = request.query_params.get("search")
     tags = request.query_params.getlist("tag")
     if not ts_to.isnumeric():
         raise HTTPException(400)
@@ -45,7 +46,8 @@ async def api_flow_list(request):
     # Query flows and associated tags using filters
     query = """
         WITH fsrvs AS (SELECT value FROM json_each(?1)),
-          ftags AS (SELECT value FROM json_each(?2))
+          ftags AS (SELECT value FROM json_each(?2)),
+          fsearchfid AS (SELECT value FROM json_each(?5))
         SELECT id, ts_start, ts_end, dest_ipport, app_proto,
           (SELECT GROUP_CONCAT(tag) FROM alert WHERE flow_id = flow.id) AS tags
         FROM flow WHERE ts_start <= ?3 AND (?4 IS NULL OR app_proto = ?4)
@@ -64,10 +66,26 @@ async def api_flow_list(request):
                 HAVING COUNT(*) = (SELECT COUNT(*) FROM ftags)
             )
         """
+    search_fid = []
+    if search:
+        cursor = await payload_database.execute(
+            "SELECT flow_id FROM raw WHERE blob GLOB ?1",
+            (search,),
+        )
+        rows = await cursor.fetchall()
+        search_fid = [r["flow_id"] for r in rows]
+        query += " AND flow.id IN fsearchfid"
     query += " ORDER BY ts_start DESC LIMIT 100"
 
     cursor = await eve_database.execute(
-        query, (json.dumps(services), json.dumps(tags), int(ts_to) * 1000, app_proto)
+        query,
+        (
+            json.dumps(services),
+            json.dumps(tags),
+            int(ts_to) * 1000,
+            app_proto,
+            json.dumps(search_fid),
+        ),
     )
     rows = await cursor.fetchall()
     flows = [dict(row) for row in rows]
