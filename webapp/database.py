@@ -155,9 +155,7 @@ class Database:
             );
             CREATE TABLE IF NOT EXISTS checkpoint (
                 id INTEGER PRIMARY KEY,
-                eve_idx INTEGER,
-                tcp_idx INTEGER,
-                udp_idx INTEGER
+                eve_idx INTEGER
             );
             CREATE TABLE IF NOT EXISTS flow (
                 id INTEGER NOT NULL PRIMARY KEY,
@@ -190,15 +188,6 @@ class Database:
                 FOREIGN KEY(flow_id) REFERENCES flow (id),
                 UNIQUE(flow_id, tag)
             );
-            CREATE TABLE IF NOT EXISTS raw (
-                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                flow_id INTEGER NOT NULL,
-                count INTEGER,
-                server_to_client INTEGER,
-                sha256 TEXT,
-                FOREIGN KEY(flow_id) REFERENCES flow (id),
-                UNIQUE(flow_id, count)
-            );
             """
         )
         for e in ["anomaly", "fileinfo"] + SUPPORTED_PROTOCOLS:
@@ -223,7 +212,7 @@ class Database:
             'CREATE INDEX IF NOT EXISTS "flow_dest_ipport_idx" ON flow(dest_ipport);'
             'CREATE INDEX IF NOT EXISTS "alert_tag_idx" ON alert(tag);'
         )
-        for e in ["alert", "anomaly", "fileinfo", "raw"] + SUPPORTED_PROTOCOLS:
+        for e in ["alert", "anomaly", "fileinfo"] + SUPPORTED_PROTOCOLS:
             await self.con.execute(
                 f'CREATE INDEX IF NOT EXISTS "{e}_flow_id_idx" ON "{e}"(flow_id);'
             )
@@ -246,52 +235,16 @@ class Database:
         assert self.con is not None, "database connection closed"
         await self.con.execute("BEGIN TRANSACTION")
         cursor = await self.con.execute(
-            "SELECT eve_idx, tcp_idx, udp_idx FROM checkpoint"
+            "SELECT eve_idx FROM checkpoint"
         )
-        eve_idx, tcp_idx, udp_idx = await cursor.fetchone() or [0, 0, 0]
+        eve_idx, = await cursor.fetchone() or [0]
 
-        # Get current log files size, this prevents loading eve events before loading their raw data
-        tcp_size = os.stat("../suricata/output/tcpstore.log").st_size
-        udp_size = os.stat("../suricata/output/udpstore.log").st_size
+        # Get current log files size
         eve_size = os.stat("../suricata/output/eve.json").st_size
 
-        total_size = tcp_size - tcp_idx + udp_size - udp_idx + eve_size - eve_idx
+        total_size = eve_size - eve_idx
         if total_size > 0:
             print(f"Loading {total_size/1024:.03f} kiB of Suricata logs...", flush=True)
-
-        with open("../suricata/output/tcpstore.log", "rb") as f:
-            f.seek(tcp_idx)
-            line_count = 0
-            for line in f:
-                if not line or not line.endswith(b"\n") or f.tell() > tcp_size:
-                    break
-                flow_id, count, server_to_client, h = line.strip().decode().split(",")
-                await self.con.execute(
-                    "INSERT OR IGNORE INTO raw (flow_id, count, server_to_client, "
-                    "sha256) values(?, ?, ?, ?)",
-                    (flow_id, int(count), int(server_to_client), h),
-                )
-                tcp_idx = f.tell()
-                line_count += 1
-        if line_count:
-            print(f"{line_count} chunks loaded from tcpstore.log", flush=True)
-
-        with open("../suricata/output/udpstore.log", "rb") as f:
-            f.seek(udp_idx)
-            line_count = 0
-            for line in f:
-                if not line or not line.endswith(b"\n") or f.tell() > udp_size:
-                    break
-                flow_id, count, server_to_client, h = line.strip().decode().split(",")
-                await self.con.execute(
-                    "INSERT OR IGNORE INTO raw (flow_id, count, server_to_client, "
-                    "sha256) values(?, ?, ?, ?)",
-                    (flow_id, int(count), int(server_to_client), h),
-                )
-                udp_idx = f.tell()
-                line_count += 1
-        if line_count:
-            print(f"{line_count} chunks loaded from udpstore.log", flush=True)
 
         # eve.json contains one event per line
         with open("../suricata/output/eve.json", "rb") as f:
@@ -311,9 +264,9 @@ class Database:
             print(f"{line_count} events loaded from eve.json", flush=True)
 
         await self.con.execute(
-            "INSERT OR REPLACE INTO checkpoint (id, eve_idx, tcp_idx, udp_idx) "
-            "values(1, ?, ?, ?)",
-            (eve_idx, tcp_idx, udp_idx),
+            "INSERT OR REPLACE INTO checkpoint (id, eve_idx) "
+            "values(1, ?)",
+            (eve_idx, ),
         )
         await self.con.execute("COMMIT")
 

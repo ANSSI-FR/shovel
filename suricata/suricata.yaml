@@ -551,8 +551,8 @@ outputs:
       enabled: yes
       #scripts-dir: /etc/suricata/lua-output/
       scripts:
-         - suricata/lua/tcpstore.lua
-         - suricata/lua/udpstore.lua
+         - suricata/suricata-tcp-payload-sqlite-output.lua
+         - suricata/suricata-udp-payload-sqlite-output.lua
 
 # Logging configuration.  This is not about logging IDS alerts/events, but
 # output about what Suricata is doing, like startup messages, errors, etc.

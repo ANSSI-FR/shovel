@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-# Copyright (C) 2023  ANSSI
+# Copyright (C) 2023-2024  ANSSI
 # SPDX-License-Identifier: GPL-3.0-only
 
 import asyncio
 import base64
 import contextlib
 import json
+import time
 
+import aiosqlite
 from starlette.applications import Starlette
 from starlette.config import Config
 from starlette.datastructures import CommaSeparatedStrings
@@ -151,21 +153,19 @@ async def api_flow_raw_get(request):
     flow = await cursor.fetchone()
     if not flow:
         raise HTTPException(404)
-    basepath = "static/{}store/".format(flow["proto"].lower())
 
     # Get associated raw data
-    cursor = await database.execute(
-        "SELECT server_to_client, sha256 FROM raw WHERE flow_id = ? ORDER BY count",
+    cursor = await payload_database.execute(
+        "SELECT server_to_client, blob FROM raw WHERE flow_id = ?1 ORDER BY count",
         [flow_id],
     )
     rows = await cursor.fetchall()
     result = []
     for r in rows:
-        with open("{}/{}/{}".format(basepath, r["sha256"][:2], r["sha256"]), "rb") as f:
-            data = base64.b64encode(f.read()).decode()
+        data = base64.b64encode(r["blob"]).decode()
         result.append({"server_to_client": r["server_to_client"], "data": data})
 
-    return JSONResponse(result, headers={"Cache-Control": "max-age=86400"})
+    return JSONResponse(result)
 
 
 async def api_replay_http(request):
@@ -229,8 +229,8 @@ async def api_replay_raw(request):
     }
 
     # Get associated raw data
-    cursor = await database.execute(
-        "SELECT server_to_client, sha256 FROM raw WHERE flow_id = ? ORDER BY count",
+    cursor = await payload_database.execute(
+        "SELECT server_to_client, blob FROM raw WHERE flow_id = ?1 ORDER BY count",
         [flow_id],
     )
     rows = await cursor.fetchall()
@@ -239,12 +239,8 @@ async def api_replay_raw(request):
 
     # Load files
     data["raw_data"] = []
-    proto = flow_event["proto"].lower()
     for row in rows:
-        sc, sha256 = row["server_to_client"], row["sha256"]
-        path = f"static/{proto}store/{sha256[:2]}/{sha256}"
-        with open(path, "rb") as f:
-            raw_data = f.read()
+        sc, raw_data = row["server_to_client"], row["blob"]
         if data["raw_data"] and data["raw_data"][-1][1] == sc and sc == 1:
             # Concat servers messages together
             data["raw_data"][-1][0] += raw_data
@@ -257,12 +253,28 @@ async def api_replay_raw(request):
     )
 
 
+async def open_database(database_uri: str, text_factory=str) -> aiosqlite.Connection:
+    while True:
+        try:
+            con = await aiosqlite.connect(database_uri, uri=True)
+        except aiosqlite.OperationalError as e:
+            print(f"Unable to open database '{database_uri}': {e}", flush=True)
+            time.sleep(1)
+            continue
+        break
+    con.row_factory = aiosqlite.Row
+    con.text_factory = text_factory
+    return con
+
+
 @contextlib.asynccontextmanager
 async def lifespan(app):
     """
-    Open database on startup and launch importer in background.
-    Close database on exit.
+    Open databases on startup and launch importer in background.
+    Close databases on exit.
     """
+    global payload_database
+    payload_database = await open_database(PAYLOAD_DB_URI, bytes)
     await database.connect()
     if await database.is_readonly():
         print("SQLite database opened in read-only mode", flush=True)
@@ -272,6 +284,7 @@ async def lifespan(app):
         db_task = asyncio.create_task(database.importer_task())
         yield
         db_task.cancel()
+    await payload_database.close()
     await database.close()
 
 
@@ -279,6 +292,9 @@ async def lifespan(app):
 config = Config(".env")
 DEBUG = config("DEBUG", cast=bool, default=False)
 DATABASE_URL = config("DATABASE_URL", cast=str, default="file:database/database.db")
+PAYLOAD_DB_URI = config(
+    "PAYLOAD_DB_URI", cast=str, default="file:../suricata/output/payload.db?mode=ro"
+)
 CTF_CONFIG = {
     "start_date": config("CTF_START_DATE", cast=str),
     "tick_length": config("CTF_TICK_LENGTH", cast=int),
@@ -291,6 +307,7 @@ for name in service_names:
 
 # Define web application
 database = Database(DATABASE_URL)
+payload_database = None
 templates = Jinja2Templates(directory="templates")
 app = Starlette(
     debug=DEBUG,

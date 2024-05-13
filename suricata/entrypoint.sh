@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 
 echo "Cleaning previous Suricata output"
-rm -f suricata/output/eve.json suricata/output/tcpstore.log suricata/output/udpstore.log
+rm -f suricata/output/eve.json
 
 SURICATA_PARAM="--runmode=single --no-random"
 if [ "${PCAP_FILE_CONTINUOUS:=true}" = true ]; then

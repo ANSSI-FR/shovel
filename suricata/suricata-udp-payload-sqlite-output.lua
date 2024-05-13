@@ -1,5 +1,7 @@
--- Copyright (C) 2023  ANSSI
--- SPDX-License-Identifier: GPL-3.0-only
+-- Copyright (C) 2024  ANSSI
+-- SPDX-License-Identifier: GPL-2.0-or-later
+
+-- This Suricata plugin logs UDP frames data to a SQLite database.
 
 function init (args)
     local needs = {}
@@ -8,16 +10,25 @@ function init (args)
 end
 
 function setup (args)
-    -- udpstore.log contains (flow_id, direction, sha256) tuples
-    local logfilename = SCLogPath() .. "/udpstore.log"
-    logfile = assert(io.open(logfilename, "a"))
+    SCLogNotice("Initializing plugin UDP payload SQLite Output; author=ANSSI; license=GPL-2.0")
 
-    -- udpstore folder contains raw data
-    foldername = SCLogPath() .. "/udpstore/"
-    for i=0,255 do
-        istr = string.format("%02x", i)
-        os.execute("mkdir -p " .. foldername .. istr)
-    end
+    -- open database in WAL mode and init schema
+    local sqlite3 = require("lsqlite3")
+    database = sqlite3.open(SCLogPath() .. "/payload.db")
+    assert(database:exec([[
+        PRAGMA journal_mode=wal;
+        PRAGMA synchronous=off;
+        CREATE TABLE IF NOT EXISTS raw (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            flow_id INTEGER NOT NULL,
+            count INTEGER,
+            server_to_client INTEGER,
+            blob BLOB,
+            UNIQUE(flow_id, count)
+        );
+        CREATE INDEX IF NOT EXISTS "raw_flow_id_idx" ON raw(flow_id);
+    ]]) == sqlite3.OK)
+    stmt = database:prepare("INSERT OR IGNORE INTO raw (flow_id, count, server_to_client, blob) values(?, ?, ?, ?);")
 
     -- packer counter for each flow
     flow_pkt_count = {}
@@ -25,8 +36,6 @@ function setup (args)
 end
 
 function log (args)
-    local sha = require("suricata/lua/sha2")
-
     -- drop if not UDP (17)
     -- https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
     local ipver, srcip, dstip, proto, sp, dp = SCPacketTuple()
@@ -43,7 +52,6 @@ function log (args)
 
     -- create log entry
     local flow_id = SCFlowId()
-    local flow_id_str = string.format("%.0f", flow_id)
     if flow_pkt_count[flow_id] == nil then
         flow_pkt_count[flow_id] = 0
     else
@@ -55,17 +63,12 @@ function log (args)
     if #data == 0 then
         return
     end
-    local hash = sha.sha256(data)
-    logfile:write(flow_id_str .. "," .. count .. "," .. direction .. "," .. hash .. "\n")
-
-    -- save data
-    local filename = foldername .. string.sub(hash, 1, 2) .. "/" .. hash
-    local datafile = assert(io.open(filename, "w"))
-    datafile:write(data)
-    datafile:close()
+    assert(stmt:reset() == sqlite3.OK)
+    assert(stmt:bind_values(flow_id, count, direction, data) == sqlite3.OK)
+    assert(stmt:step() == sqlite3.DONE)
 end
 
 function deinit (args)
     SCLogNotice("UDP flow logged: " .. flow_pkt_count_total)
-    logfile:close()
+    database:close()
 end
