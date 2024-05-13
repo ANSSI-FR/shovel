@@ -21,11 +21,11 @@ from starlette.templating import Jinja2Templates
 from database import Database
 
 
-def row_to_dict(row) -> dict:
-    row = dict(row)
-    extra_data = json.loads(row.pop("extra_data"))
-    row.update(extra_data)
-    return row
+def row_to_dict(row: aiosqlite.Row) -> dict:
+    row_dict = dict(row)
+    extra_data = json.loads(row_dict.pop("extra_data"))
+    row_dict.update(extra_data)
+    return row_dict
 
 
 async def index(request):
