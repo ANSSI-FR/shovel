@@ -18,7 +18,7 @@ services:
     build: ./webapp
     image: anssi/shovel-webapp:dev
     volumes:
-      - "./input_pcaps:/webapp/static/input_pcaps:ro"
+      - "./input_pcaps:/input_pcaps:ro"
       - "./suricata/output:/suricata/output:ro"
     ports:
       - 127.0.0.1:8000:8000
