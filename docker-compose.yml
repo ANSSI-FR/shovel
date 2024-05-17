@@ -18,8 +18,13 @@ services:
     build: ./webapp
     image: anssi/shovel-webapp:dev
     volumes:
+      # You may remove the next line if `PCAP_FILE=false`.
       - "./input_pcaps:/input_pcaps:ro"
-      - "./suricata/output:/suricata/output:ro"
+      # Write access is required in SQLite `mode=ro` as readers need to record
+      # a mark in the WAL file. If you need to make the volume read-only, then
+      # use `immutable=1` parameter in SQLite databases URI. In immutable mode,
+      # SQLite doesn't follow changes made to the database.
+      - "./suricata/output:/suricata/output:rw"
     ports:
       - 127.0.0.1:8000:8000
     env_file:
