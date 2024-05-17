@@ -311,7 +311,7 @@ EVE_DB_URI = config(
 PAYLOAD_DB_URI = config(
     "PAYLOAD_DB_URI", cast=str, default="file:../suricata/output/payload.db?mode=ro"
 )
-PCAP_FILE = config("PCAP_FILE", cast=bool)
+PCAP_FILE = config("PCAP_FILE", cast=bool, default=True)
 CTF_CONFIG = {
     "start_date": config("CTF_START_DATE", cast=str),
     "tick_length": config("CTF_TICK_LENGTH", cast=int),
