@@ -297,13 +297,23 @@ class FlowList {
     // Fill list
     document.getElementById('flow-list').classList.remove('d-none')
     document.getElementById('flow-list-loading-indicator').classList.add('d-none')
+    let lastTick = -1
     flows.forEach((flow) => {
       const date = new Date(flow.ts_start)
       const startDate = new Intl.DateTimeFormat(
         'en-US',
-        { hour: 'numeric', minute: 'numeric', second: 'numeric', fractionalSecondDigits: 3 }
+        { hour: 'numeric', minute: 'numeric', second: 'numeric', fractionalSecondDigits: 1 }
       ).format(date)
       const tick = Math.floor((flow.ts_start / 1000 - this.startTs) / this.tickLength)
+
+      // Create tick element on new tick
+      if (tick !== lastTick) {
+        const tickEl = document.createElement('span')
+        tickEl.classList.add('list-group-item', 'pt-3', 'pb-1', 'px-2', 'border-0', 'border-bottom', 'bg-light-subtle', 'text-center', 'fw-semibold')
+        tickEl.textContent = `Tick ${tick}`
+        flowList.appendChild(tickEl)
+        lastTick = tick
+      }
 
       // Build URL
       const url = new URL(document.location)
@@ -316,36 +326,24 @@ class FlowList {
       flowEl.dataset.flow = flow.id
       flowEl.dataset.ts_start = flow.ts_start / 1000
 
-      const flowTimingDiv = document.createElement('div')
-      flowTimingDiv.classList.add('d-flex', 'justify-content-between', 'mb-1')
-      const flowTimingDiv1 = document.createElement('span')
-      const flowTimingDiv1Bold = document.createElement('b')
-      flowTimingDiv1Bold.textContent = `Tick ${tick}`
-      const flowTimingDiv1Text = document.createTextNode(` (${startDate})`)
-      const flowTimingDiv2 = document.createElement('small')
-      flowTimingDiv2.textContent = this.pprintDelay(flow.ts_end - flow.ts_start)
-      flowTimingDiv1.appendChild(flowTimingDiv1Bold)
-      flowTimingDiv1.appendChild(flowTimingDiv1Text)
-      flowTimingDiv.appendChild(flowTimingDiv1)
-      flowTimingDiv.appendChild(flowTimingDiv2)
-      flowEl.appendChild(flowTimingDiv)
+      const flowInfoDiv = document.createElement('div')
+      flowInfoDiv.classList.add('d-flex', 'justify-content-between', 'mb-1')
+      const flowInfoDiv1 = document.createElement('small')
+      flowInfoDiv1.textContent = this.pprintService(flow.dest_ipport)
+      const flowInfoDiv2 = document.createElement('small')
+      flowInfoDiv2.textContent = `${this.pprintDelay(flow.ts_end - flow.ts_start)}, ${startDate}`
+      flowInfoDiv.appendChild(flowInfoDiv1)
+      flowInfoDiv.appendChild(flowInfoDiv2)
+      flowEl.appendChild(flowInfoDiv)
 
-      const flowAddrDiv = document.createElement('div')
-      flowAddrDiv.classList.add('mb-1', 'small')
-      flowAddrDiv.textContent = `➔ ${this.pprintService(flow.dest_ipport)}`
-      flowEl.appendChild(flowAddrDiv)
-
-      // Use application protocol as first badge
+      // Use application protocol (or 'raw') as first badge
       const appProto = flow.app_proto !== 'failed' ? flow.app_proto : null
-      if (appProto) {
-        const badge = this.tagBadge(appProto.toUpperCase(), 'white')
-        flowEl.appendChild(badge)
-      }
+      const badge = this.tagBadge((appProto ?? 'raw').toUpperCase())
+      flowEl.appendChild(badge)
 
       const flowTags = flow.tags?.split(',')
       tags.forEach(t => {
         const { tag, color } = t
-
         if (flowTags?.includes(tag)) {
           const badge = this.tagBadge(tag, color)
           flowEl.appendChild(badge)
