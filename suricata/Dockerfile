@@ -1,8 +1,8 @@
 # Copyright (C) 2023-2024  ANSSI
 # SPDX-License-Identifier: CC0-1.0
-FROM alpine:3.20 AS builder
+FROM rust:1.78.0-alpine3.20 AS builder
 WORKDIR /src/
-RUN apk add --no-cache cargo musl-dev
+RUN apk add --no-cache musl-dev
 COPY ./suricata-eve-sqlite-output/ /src/
 RUN RUSTFLAGS="-C target-feature=-crt-static" cargo build --release
 
