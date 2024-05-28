@@ -26,17 +26,25 @@ class FlowList {
         switch (e.code) {
           case 'ArrowLeft':
             if (this.selectedFlowId) {
-              document.querySelector('#flow-list a.active')?.previousElementSibling?.click()
+              let prevElem = document.querySelector('#flow-list a.active')?.previousElementSibling
+              if (prevElem && prevElem.tagName.toLowerCase() === 'span') {
+                prevElem = prevElem.previousElementSibling
+              }
+              prevElem?.click()
             } else {
-              document.querySelector('#flow-list a:first-child')?.click()
+              document.querySelector('#flow-list a')?.click()
             }
             e.preventDefault()
             break
           case 'ArrowRight':
             if (this.selectedFlowId) {
-              document.querySelector('#flow-list a.active')?.nextElementSibling?.click()
+              let nextElem = document.querySelector('#flow-list a.active')?.nextElementSibling
+              if (nextElem && nextElem.tagName.toLowerCase() === 'span') {
+                nextElem = nextElem.nextElementSibling
+              }
+              nextElem?.click()
             } else {
-              document.querySelector('#flow-list a:first-child')?.click()
+              document.querySelector('#flow-list a')?.click()
             }
             e.preventDefault()
             break
@@ -48,7 +56,7 @@ class FlowList {
     document.getElementById('flow-list').addEventListener('click', e => {
       if (!e.ctrlKey) {
         const newFlowId = e.target.closest('a')?.dataset?.flow
-        if (this.selectedFlowId !== newFlowId) {
+        if (newFlowId && this.selectedFlowId !== newFlowId) {
           this.selectedFlowId = newFlowId
           window.history.pushState(null, '', e.target.closest('a').href)
           window.dispatchEvent(new Event('locationchange'))
