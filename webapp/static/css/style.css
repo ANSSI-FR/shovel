@@ -59,7 +59,7 @@ content .nav-pills {
   font-size: 8pt;
 }
 .text-bg-none {
-  color: rgba(var(--bs-body-color-rgb),1) !important;
+  color: inherit;
 }
 
 pre {
