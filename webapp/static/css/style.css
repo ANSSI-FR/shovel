@@ -72,3 +72,8 @@ pre {
   max-height: 256px;
   background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAPCAIAAABiEdh4AAAAJ0lEQVQoz2OcOXMmAzZw9uxZrOJMDCSCEamBBVfwGRsbj4YS/TQAAH8aB1JXTyw+AAAAAElFTkSuQmCC");
 }
+
+/* Extend background color on whole line height */
+pre code {
+  padding: 2px 0;
+}

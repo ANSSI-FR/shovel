@@ -103,7 +103,6 @@ class FlowDisplay {
       }
     })
 
-    hexdump += `${byteArray.length.toString(16).padStart(8, '0')}\n`
     return hexdump
   }
 
@@ -327,7 +326,7 @@ class FlowDisplay {
         codeElHex.classList.add('text-white')
         codeElHex.classList.toggle('bg-danger', chunk.server_to_client === 0)
         codeElHex.classList.toggle('bg-success', chunk.server_to_client === 1)
-        codeElHex.textContent = this.renderHexDump(byteArray)
+        codeElHex.textContent = this.renderHexDump(byteArray) + '\n'
         hexView.appendChild(codeElHex)
       })
     }
