@@ -309,7 +309,7 @@ class FlowList {
       // Create tick element on new tick
       if (tick !== lastTick) {
         const tickEl = document.createElement('span')
-        tickEl.classList.add('list-group-item', 'pt-3', 'pb-1', 'px-2', 'border-0', 'border-bottom', 'bg-light-subtle', 'text-center', 'fw-semibold')
+        tickEl.classList.add('list-group-item', 'sticky-top', 'pt-3', 'pb-1', 'px-2', 'border-0', 'border-bottom', 'bg-light-subtle', 'text-center', 'fw-semibold')
         tickEl.textContent = `Tick ${tick}`
         flowList.appendChild(tickEl)
         lastTick = tick
