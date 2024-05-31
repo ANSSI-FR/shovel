@@ -37,7 +37,7 @@
     </symbol>
   </svg>
 
-  <main class="d-flex flex-nowrap h-100" id="app" data-start-date="{{ ctf_config.start_date }}" data-tick-length="{{ ctf_config.tick_length }}">
+  <div class="d-flex flex-nowrap h-100" id="app" data-start-date="{{ ctf_config.start_date }}" data-tick-length="{{ ctf_config.tick_length }}">
     <nav class="d-flex flex-column align-items-stretch flex-shrink-0 bg-body shadow nav-flow">
       <div class="d-flex flex-nowrap border-bottom">
         <select class="form-select form-select-sm rounded-0 border-0" id="services-select">
@@ -105,7 +105,7 @@
       </div>
     </nav>
 
-    <content class="vstack overflow-y-scroll">
+    <div class="vstack overflow-y-scroll">
       <!-- Welcome section, shown only when no flows are selected -->
       <div class="my-auto text-center p-2" id="display-welcome">
         <img src="static/favicon.svg" alt="" width="80">
@@ -168,8 +168,8 @@
           </div>
         </section>
       </div>
-    </content>
-  </main>
+    </div>
+  </div>
 </body>
 
 </html>

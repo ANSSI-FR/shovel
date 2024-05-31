@@ -45,8 +45,8 @@ select.is-active {
   border-color: #ac80ff !important;
 }
 
-/* Make active nav pills less visible in flow display */
-content .nav-pills {
+/* Change nav pills active color */
+.nav-pills {
   --bs-nav-pills-link-active-bg: #495057;
 }
 
