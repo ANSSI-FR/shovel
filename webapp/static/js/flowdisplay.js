@@ -142,7 +142,7 @@ class FlowDisplay {
 
     // Flow card
     document.getElementById('display-flow').classList.remove('d-none')
-    document.querySelector('#display-flow > header > span').textContent = `${flow.flow.proto} flow, ${flow.flow.src_ipport} ➔ ${flow.flow.dest_ipport}`
+    document.querySelector('#display-flow > header > h1').textContent = `${flow.flow.proto} flow, ${flow.flow.src_ipport} ➔ ${flow.flow.dest_ipport}`
     document.querySelector('#display-flow > header > a').href = flow.flow.pcap_filename
     document.querySelector('#display-flow > header > a').classList.toggle('d-none', !flow.flow.pcap_filename)
     const flowBody = document.querySelector('#display-flow > pre')
@@ -182,7 +182,7 @@ class FlowDisplay {
     if (appProto && appProto !== 'failed' && flow[appProto] !== undefined) {
       document.getElementById('display-app').classList.remove('d-none')
       document.querySelector('#display-app > header > a').classList.toggle('d-none', appProto !== 'http')
-      document.querySelector('#display-app > header > span > span').textContent = appProto.toUpperCase()
+      document.querySelector('#display-app > header > h1 > a > span').textContent = appProto.toUpperCase()
       const body = document.querySelector('#display-app > div > pre')
       body.textContent = ''
       if (appProto === 'http' || appProto === 'http2') {

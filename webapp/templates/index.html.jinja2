@@ -123,22 +123,22 @@
       <div>
         <section class="card m-3 bg-body shadow font-monospace d-none border-secondary" id="display-flow">
           <header class="card-header d-flex justify-content-between">
-            <span></span>
+            <h1 class="h6 lh-base mb-0"></h1>
             <a class="text-nowrap" href="#" download>Download pcap</a>
           </header>
           <pre class="card-body mb-0"></pre>
         </section>
-        <section id="display-alerts"></section>
+        <div id="display-alerts"></div>
         <section class="card m-3 bg-body shadow font-monospace d-none border-success" id="display-app">
           <header class="card-header d-flex justify-content-between">
-            <span>
+            <h1 class="h6 lh-base mb-0">
               <a class="text-reset text-decoration-none" data-bs-toggle="collapse" href="#display-app-collapse" role="button" aria-expanded="true" aria-controls="display-app-collapse">
                 <svg class="bi me-2" width="16" height="16">
                   <use xlink:href="#chevron-down" />
                 </svg>
+                <span></span>
               </a>
-              <span></span>
-            </span>
+            </h1>
             <a class="text-nowrap" href="#" target="_blank">Generate script</a>
           </header>
           <div class="collapse show" id="display-app-collapse">
@@ -148,18 +148,18 @@
         </section>
         <section class="card m-3 bg-body shadow font-monospace d-none border-primary" id="display-raw">
           <header class="card-header d-flex justify-content-between">
-            <span>
+            <h1 class="h6 lh-base mb-0">
               <a class="text-reset text-decoration-none" data-bs-toggle="collapse" href="#display-raw-collapse" role="button" aria-expanded="true" aria-controls="display-raw-collapse">
                 <svg class="bi me-2" width="16" height="16">
                   <use xlink:href="#chevron-down" />
                 </svg>
+                Raw data
               </a>
-              <span>Raw data</span>
-              <nav class="nav nav-pills d-inline-flex" role="tablist">
+              <span class="nav nav-pills d-inline-flex" role="tablist">
                 <button class="nav-link py-0 active" id="display-raw-utf8-tab" data-bs-toggle="pill" data-bs-target="#display-raw-utf8" type="button" role="tab" aria-controls="display-raw-utf8" aria-selected="true">UTF-8</button>
                 <button class="nav-link py-0" id="display-raw-hex-tab" data-bs-toggle="pill" data-bs-target="#display-raw-hex" type="button" role="tab" aria-controls="display-raw-hex" aria-selected="false">Hex</button>
-              </nav>
-            </span>
+              </span>
+            </h1>
             <a class="text-nowrap" id="display-raw-replay" href="#" target="_blank">Generate script</a>
           </header>
           <div class="tab-content collapse show" id="display-raw-collapse">
