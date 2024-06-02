@@ -75,5 +75,5 @@ pre {
 
 /* Extend background color on whole line height */
 pre code {
-  padding: 2px 0;
+  padding: .1875em 0;
 }
