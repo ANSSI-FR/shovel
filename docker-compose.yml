@@ -26,11 +26,3 @@ services:
       - 127.0.0.1:8000:8000
     env_file:
       - .env
-
-  grafana:
-    build: ./grafana
-    image: anssi/shovel-grafana:dev
-    volumes:
-      - "./webapp/database:/webapp/database:ro"
-    ports:
-      - 127.0.0.1:3000:3000
