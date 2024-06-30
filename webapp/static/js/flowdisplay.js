@@ -122,7 +122,6 @@ class FlowDisplay {
     const flow = await this.apiClient.getFlow(flowId)
 
     // Format flow data
-    const tick = Math.floor((flow.flow.ts_start / 1000 - this.startTs) / this.tickLength)
     const dateParams = {
       year: 'numeric',
       month: 'numeric',
@@ -138,7 +137,7 @@ class FlowDisplay {
     const formatedDateEnd = new Intl.DateTimeFormat('en-US', dateParams).format(dateEnd)
 
     // Change document title
-    document.title = `Tick ${tick} - ${flow.flow.dest_ipport} - Shovel`
+    document.title = `${flow.flow.dest_ipport} - Shovel`
 
     // Flow card
     document.getElementById('display-flow').classList.remove('d-none')
@@ -147,7 +146,11 @@ class FlowDisplay {
     document.querySelector('#display-flow > header > a').classList.toggle('d-none', !flow.flow.pcap_filename)
     const flowBody = document.querySelector('#display-flow > pre')
     flowBody.title = `${flow.flow.ts_start} - ${flow.flow.ts_end}`
-    flowBody.textContent = `Tick ${tick}, from ${formatedDateStart} to ${formatedDateEnd}`
+    flowBody.textContent = `From ${formatedDateStart} to ${formatedDateEnd}`
+    if (this.tickLength > 0) {
+      const tick = Math.floor((flow.flow.ts_start / 1000 - this.startTs) / this.tickLength)
+      flowBody.textContent += `, tick ${tick}`
+    }
     flowBody.textContent += `\nClient sent ${flow.flow.pkts_toserver} packets (${flow.flow.bytes_toserver} bytes), server replied with ${flow.flow.pkts_toclient} packets (${flow.flow.bytes_toclient} bytes).`
 
     // Alert and anomaly cards

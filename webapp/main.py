@@ -313,11 +313,11 @@ PAYLOAD_DB_URI = config(
 )
 PCAP_FILE = config("PCAP_FILE", cast=bool, default=True)
 CTF_CONFIG = {
-    "start_date": config("CTF_START_DATE", cast=str),
-    "tick_length": config("CTF_TICK_LENGTH", cast=int),
+    "start_date": config("CTF_START_DATE", cast=str, default="1970-01-01T00:00+00:00"),
+    "tick_length": config("CTF_TICK_LENGTH", cast=int, default=0),
     "services": {},
 }
-service_names = config("CTF_SERVICES", cast=CommaSeparatedStrings)
+service_names = config("CTF_SERVICES", cast=CommaSeparatedStrings, default=[])
 for name in service_names:
     ipports = config(f"CTF_SERVICE_{name.upper()}", cast=CommaSeparatedStrings)
     CTF_CONFIG["services"][name] = list(ipports)
