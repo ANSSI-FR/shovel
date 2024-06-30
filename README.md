@@ -44,8 +44,8 @@ If you are playing a CTF using an IPv6 network, you might want to [enable IPv6 s
 
 You should place network captures in `input_pcaps/` folder.
 Capture files should be splitted into chunks to be progressively imported.
-If the CTF event does not already provide PCAP files, then you can adapt one
-of the following commands for a GNU/Linux system:
+If the CTF event does not already provide PCAP files, then you may adapt the
+following command for a GNU/Linux system (22 is SSH):
 ```bash
 ssh root@10.20.9.6 tcpdump -i game -n -w - 'tcp port not 22' | tcpdump -n -r - -G 30 -w input_pcaps/trace-%Y-%m-%d_%H-%M-%S.pcap
 ```
@@ -56,9 +56,9 @@ For a Microsoft Windows system, you may adapt the following command (3389 is RDP
 
 ### 2. Launch Suricata and webapp via Docker (option A)
 
-Start Suricata, the web application and Grafana using `docker compose up -d --build`.
+Start Suricata and the web application using `docker compose up -d --build`.
 
-By default, all services are only accessible from localhost.
+By default, all services are only accessible from `localhost`.
 You should edit `docker-compose.yml` if you want to expose some services to your local network.
 
 Please note that restarting Suricata will cause all network capture files to be loaded again.
