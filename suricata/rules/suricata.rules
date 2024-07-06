@@ -9,14 +9,15 @@
 # As PCRE is slow, please use a content filter before.
 # Please test your regex at https://regex101.com/ using "PCRE2" mode.
 # Some rules match also in 'file.data' in case of compressed payload.
+# ENOWARS rules are disabled by default as they cause false positives
 alert ip $HOME_NET any -> any any (msg: "A ECSC flag was sent to client"; flow:to_client; content: "ECSC_"; pcre: "/ECSC_[A-Za-z0-9\/+]{32}/"; distance: -5; metadata: tag FLAG OUT, color danger; sid: 1;)
 alert ip $HOME_NET any -> any any (msg: "A ECSC flag was sent to client"; flow:to_client; file.data; content: "ECSC_"; pcre: "/ECSC_[A-Za-z0-9\/+]{32}/"; distance: -5; metadata: tag FLAG OUT, color danger; sid: 2;)
 alert ip $HOME_NET any -> any any (msg: "A ECSC flag was sent to client (base64)"; flow:to_client; content: "RUNTQ1"; pcre: "/RUNTQ1[A-Za-z0-9\/+]{44}==/"; distance: -6; metadata: tag FLAG OUT B64, color danger; sid: 3;)
 alert ip $HOME_NET any -> any any (msg: "A ECSC flag was sent to client (base64)"; flow:to_client; file.data; content: "RUNTQ1"; pcre: "/RUNTQ1[A-Za-z0-9\/+]{44}==/"; distance: -6; metadata: tag FLAG OUT B64, color danger; sid: 4;)
-alert ip $HOME_NET any -> any any (msg: "A ENOWARS flag was sent to client"; flow:to_client; content: "ENO"; pcre: "/ENO[A-Za-z0-9+\/=]{48}/"; distance: -3; metadata: tag FLAG OUT, color danger; sid: 5;)
-alert ip $HOME_NET any -> any any (msg: "A ENOWARS flag was sent to client"; flow:to_client; file.data; content: "ENO"; pcre: "/ENO[A-Za-z0-9+\/=]{48}/"; distance: -3; metadata: tag FLAG OUT, color danger; sid: 6;)
-alert ip $HOME_NET any -> any any (msg: "A ENOWARS flag was sent to client (base64)"; flow:to_client; content: "RU5P"; pcre: "/RU5P[A-Za-z0-9\/+]{64}/"; distance: -4; metadata: tag FLAG OUT B64, color danger; sid: 7;)
-alert ip $HOME_NET any -> any any (msg: "A ENOWARS flag was sent to client (base64)"; flow:to_client; file.data; content: "RU5P"; pcre: "/RU5P[A-Za-z0-9\/+]{64}/"; distance: -4; metadata: tag FLAG OUT B64, color danger; sid: 8;)
+#alert ip $HOME_NET any -> any any (msg: "A ENOWARS flag was sent to client"; flow:to_client; content: "ENO"; pcre: "/ENO[A-Za-z0-9+\/=]{48}/"; distance: -3; metadata: tag FLAG OUT, color danger; sid: 5;)
+#alert ip $HOME_NET any -> any any (msg: "A ENOWARS flag was sent to client"; flow:to_client; file.data; content: "ENO"; pcre: "/ENO[A-Za-z0-9+\/=]{48}/"; distance: -3; metadata: tag FLAG OUT, color danger; sid: 6;)
+#alert ip $HOME_NET any -> any any (msg: "A ENOWARS flag was sent to client (base64)"; flow:to_client; content: "RU5P"; pcre: "/RU5P[A-Za-z0-9\/+]{64}/"; distance: -4; metadata: tag FLAG OUT B64, color danger; sid: 7;)
+#alert ip $HOME_NET any -> any any (msg: "A ENOWARS flag was sent to client (base64)"; flow:to_client; file.data; content: "RU5P"; pcre: "/RU5P[A-Za-z0-9\/+]{64}/"; distance: -4; metadata: tag FLAG OUT B64, color danger; sid: 8;)
 alert ip $HOME_NET any -> any any (msg: "A FAUSTCTF flag was sent to client"; flow:to_client; content: "FAUST_"; metadata: tag FLAG OUT, color danger; sid: 9;)
 alert ip $HOME_NET any -> any any (msg: "A FAUSTCTF flag was sent to client"; flow:to_client; file.data; content: "FAUST_"; metadata: tag FLAG OUT, color danger; sid: 10;)
 alert ip $HOME_NET any -> any any (msg: "A FAUSTCTF flag was sent to client (base64)"; flow:to_client; content: "RkFVU1Rf"; metadata: tag FLAG OUT B64, color danger; sid: 11;)
@@ -28,7 +29,7 @@ alert ip $HOME_NET any -> any any (msg: "A ICC flag was sent to client (base64)"
 alert ip $HOME_NET any -> any any (msg: "A CINI flag (ECSC 2024) was sent to client"; flow:to_client; content: "="; pcre: "/[A-Z0-9]{31}=/"; distance: -32; metadata: tag FLAG OUT, color danger; sid: 17;)
 alert ip $HOME_NET any -> any any (msg: "A CINI flag (ECSC 2024) was sent to client"; flow:to_client; file.data; content: "="; pcre: "/[A-Z0-9]{31}=/"; distance: -32; metadata: tag FLAG OUT, color danger; sid: 18;)
 alert ip any any -> $HOME_NET any (msg: "A ECSC flag was placed in our services (probably by the checker bot)"; flow:to_server; content: "ECSC_"; pcre: "/ECSC_[A-Za-z0-9\/+]{32}/"; distance: -5; metadata: tag FLAG IN, color success; sid: 51;)
-alert ip any any -> $HOME_NET any (msg: "A ENOWARS flag was placed in our services (probably by the checker bot)"; flow:to_server; content: "ENO"; pcre: "/ENO[A-Za-z0-9+\/=]{48}/"; distance: -3; metadata: tag FLAG IN, color success; sid: 52;)
+#alert ip any any -> $HOME_NET any (msg: "A ENOWARS flag was placed in our services (probably by the checker bot)"; flow:to_server; content: "ENO"; pcre: "/ENO[A-Za-z0-9+\/=]{48}/"; distance: -3; metadata: tag FLAG IN, color success; sid: 52;)
 alert ip any any -> $HOME_NET any (msg: "A FAUSTCTF flag was placed in our services (probably by the checker bot)"; flow:to_server; content: "FAUST_"; pcre: "/FAUST_[A-Za-z0-9\/+]{32}/"; distance: -6; metadata: tag FLAG IN, color success; sid: 53;)
 alert ip any any -> $HOME_NET any (msg: "A ICC flag was placed in our services (probably by the checker bot)"; flow:to_server; content: "ICC_"; pcre: "/ICC_[A-Za-z0-9\/+]{32}/"; distance: -4; metadata: tag FLAG IN, color success; sid: 54;)
 alert ip any any -> $HOME_NET any (msg: "A CINI flag (ECSC 2024) was placed in our services (probably by the checker bot)"; flow:to_server; content: "="; pcre: "/[A-Z0-9]{31}=/"; distance: -32; metadata: tag FLAG IN, color success; sid: 55;)
