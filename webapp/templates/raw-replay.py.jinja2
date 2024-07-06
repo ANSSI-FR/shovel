@@ -25,7 +25,7 @@ Service: {{ ns.service_name }}
 # Set logging level
 context.log_level = "DEBUG"  # or INFO, WARNING, ERROR
 
-# Load environment variables
+# Load variables
 # EXTRA is an array of the flagids for current service and team
 HOST = os.getenv("TARGET_IP")
 EXTRA = json.loads(os.getenv("TARGET_EXTRA", "[]"))

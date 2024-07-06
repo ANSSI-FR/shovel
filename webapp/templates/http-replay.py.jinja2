@@ -22,7 +22,7 @@ Corresponding flow id: {{ data[0].flow_id }}
 Service: {{ ns.service_name }}
 """
 
-# Load environment variables
+# Load variables
 # EXTRA is an array of the flagids for current service and team
 HOST = os.getenv("TARGET_IP")
 EXTRA = json.loads(os.getenv("TARGET_EXTRA", "[]"))
@@ -50,7 +50,7 @@ r = s.{{ req.http_method | lower }}(
     },
     timeout=2,
 )
-if r.status_code != req.status:
+if r.status_code != {{ req.status }}:
     print(f"[!] Request returned wrong status code {r.status_code}, expected {{ req.status }}")
 print(r.text)
 
