@@ -20,9 +20,10 @@ export default class Api {
    * @param {Array} services Keep only flows matching these IP address and ports
    * @param {String} appProto Keep only flows matching this app-layer protocol
    * @param {String} search Search for this glob pattern in flows payloads
-   * @param {Array} tags Keep only flows matching these tags
+   * @param {Array} requiredTags Keep only flows matching these tags
+   * @param {Array} deniedTags Deny flows matching these tags
    */
-  async listFlows (timestampFrom, timestampTo, services, appProto, search, tags) {
+  async listFlows (timestampFrom, timestampTo, services, appProto, search, requiredTags, deniedTags) {
     const url = new URL(`${location.origin}${location.pathname}api/flow`)
     if (typeof timestampFrom === 'number') {
       url.searchParams.append('from', timestampFrom)
@@ -39,8 +40,11 @@ export default class Api {
     if (search) {
       url.searchParams.append('search', search)
     }
-    tags?.forEach((t) => {
+    requiredTags?.forEach((t) => {
       url.searchParams.append('tag', t)
+    })
+    deniedTags?.forEach((t) => {
+      url.searchParams.append('deny_tag', t)
     })
     const response = await fetch(url.href, {})
     if (!response.ok) {

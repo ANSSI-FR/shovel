@@ -39,18 +39,21 @@ async def api_flow_list(request):
     services = request.query_params.getlist("service")
     app_proto = request.query_params.get("app_proto")
     search = request.query_params.get("search")
-    tags = request.query_params.getlist("tag")
+    required_tags = request.query_params.getlist("tag")
+    denied_tags = request.query_params.getlist("deny_tag")
+
     if not ts_to.isnumeric():
         raise HTTPException(400)
 
     # Query flows and associated tags using filters
     query = """
         WITH fsrvs AS (SELECT value FROM json_each(?1)),
-          ftags AS (SELECT value FROM json_each(?2)),
-          fsearchfid AS (SELECT value FROM json_each(?5))
+          f_req_tags AS (SELECT value FROM json_each(?2)),
+          f_deny_tags AS (SELECT value FROM json_each(?3)),
+          fsearchfid AS (SELECT value FROM json_each(?6))
         SELECT id, ts_start, ts_end, dest_ipport, app_proto,
           (SELECT GROUP_CONCAT(tag) FROM alert WHERE flow_id = flow.id) AS tags
-        FROM flow WHERE ts_start <= ?3 AND (?4 IS NULL OR app_proto = ?4)
+        FROM flow WHERE ts_start <= ?4 AND (?5 IS NULL OR app_proto = ?5)
     """
     if services == ["!"]:
         # Filter flows related to no services
@@ -58,14 +61,25 @@ async def api_flow_list(request):
         services = sum(CTF_CONFIG["services"].values(), [])
     elif services:
         query += "AND (src_ipport IN fsrvs OR dest_ipport IN fsrvs)"
-    if tags:
+
+    if denied_tags:
+        # No alert with at least a denied tag exists for this flow
+        query += """
+            AND NOT EXISTS (
+                SELECT 1 FROM alert
+                WHERE flow_id == flow.id AND alert.tag IN f_deny_tags
+            )
+        """
+
+    if required_tags:
         # Relational division to get all flow_id matching all chosen tags
         query += """
             AND flow.id IN (
-                SELECT flow_id FROM alert WHERE tag IN ftags GROUP BY flow_id
-                HAVING COUNT(*) = (SELECT COUNT(*) FROM ftags)
+                SELECT flow_id FROM alert WHERE tag IN f_req_tags GROUP BY flow_id
+                HAVING COUNT(*) = (SELECT COUNT(*) FROM f_req_tags)
             )
         """
+    
     search_fid = []
     if search:
         cursor = await payload_database.execute(
@@ -81,7 +95,8 @@ async def api_flow_list(request):
         query,
         (
             json.dumps(services),
-            json.dumps(tags),
+            json.dumps(required_tags),
+            json.dumps(denied_tags),
             int(ts_to) * 1000,
             app_proto,
             json.dumps(search_fid),

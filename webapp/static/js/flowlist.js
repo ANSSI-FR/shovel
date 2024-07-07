@@ -158,19 +158,61 @@ class FlowList {
       const tag = e.target.closest('a')?.dataset.tag
       if (tag) {
         const url = new URL(document.location)
-        const activeTags = url.searchParams.getAll('tag')
-        if (activeTags.includes(tag)) {
-          // Remove tag
-          url.searchParams.delete('tag')
-          activeTags.forEach(t => {
-            if (t !== tag) {
-              url.searchParams.append('tag', t)
-            }
-          })
+
+        let requiredTags = url.searchParams.getAll('tag')
+        let deniedTags = url.searchParams.getAll('deny_tag')
+
+        const is_required = requiredTags.includes(tag)
+        const is_denied = deniedTags.includes(tag)
+
+        let next_state;
+        if (is_required) {
+          if (e.shiftKey) {
+            // required => denied
+            next_state = 'denied'
+          } else {
+            // required => inactive
+            next_state = 'inactive'
+          }
+        } else if (is_denied) {
+          if (e.shiftKey) {
+            // denied => required
+            next_state = 'required'
+          } else {
+            // denied => inactive
+            next_state = 'inactive'
+          }
         } else {
-          // Add tag
-          url.searchParams.append('tag', tag)
+          if (e.shiftKey) {
+            // inactive => denied
+            next_state = 'denied'
+          } else {
+            // inactive => required
+            next_state = 'required'
+          }
         }
+
+        deniedTags = deniedTags.filter(t => t !== tag)
+        requiredTags = requiredTags.filter(t => t !== tag)
+
+        if (next_state == 'required') {
+          requiredTags.push(tag)
+        }
+        if (next_state == 'denied') {
+          deniedTags.push(tag)
+        }
+
+        url.searchParams.delete("tag")
+        url.searchParams.delete("deny_tag")
+
+        requiredTags.forEach(t => {
+          url.searchParams.append('tag', t)
+        })
+
+        deniedTags.forEach(t => {
+          url.searchParams.append('deny_tag', t)
+        })
+
         window.history.pushState(null, '', url.href)
         this.update()
         e.preventDefault()
@@ -218,11 +260,20 @@ class FlowList {
    * Build tag element
    * @param {String} text Tag name
    * @param {String} color Tag color
+   * @param {boolean} [fill=false] Active style
    * @returns HTML element representing the tag
    */
-  tagBadge (text, color) {
+  tagBadge (text, color, fill = true) {
     const badge = document.createElement('span')
-    badge.classList.add('badge', `text-bg-${color ?? 'none'}`, 'mb-1', 'me-1', 'p-1')
+    badge.classList.add('badge', 'mb-1', 'me-1', 'p-1')
+    if (fill) {
+      badge.classList.add(`text-bg-${color ?? 'none'}`)
+    } else {
+      badge.classList.add(
+        `border-${color ?? 'none'}`,
+        `text-${color ?? 'none'}`
+      )
+    }
     badge.textContent = text
     return badge
   }
@@ -271,11 +322,15 @@ class FlowList {
       // Create tag and append to dropdown
       const { tag, color } = t
       const url = new URL(document.location)
-      const activeTags = url.searchParams.getAll('tag')
-      const badge = this.tagBadge(tag, color)
-      badge.classList.add('border', 'border-2')
-      badge.classList.toggle('border-purple', activeTags.includes(tag))
-      badge.classList.toggle('text-bg-purple', activeTags.includes(tag))
+      
+      const is_required = url.searchParams.getAll('tag').includes(tag)
+      const is_denied = url.searchParams.getAll('deny_tag').includes(tag)
+      
+      const is_active = is_required || is_denied
+
+      const badge = this.tagBadge(tag, color, is_active)
+      badge.classList.toggle('text-decoration-line-through', is_denied)
+      
       const link = document.createElement('a')
       link.href = '#'
       link.dataset.tag = tag
@@ -381,14 +436,16 @@ class FlowList {
     const services = url.searchParams.getAll('service')
     const filterAppProto = url.searchParams.get('app_proto')
     const filterSearch = url.searchParams.get('search')
-    const filterTags = url.searchParams.getAll('tag')
+    const filterRequiredTags = url.searchParams.getAll('tag')
+    const filterDeniedTags = url.searchParams.getAll('deny_tag')
     const { flows, appProto, tags } = await this.apiClient.listFlows(
       fromTs ? Number(fromTs) : null,
       toTs ? Number(toTs) : null,
       services,
       filterAppProto,
       filterSearch,
-      filterTags
+      filterRequiredTags,
+      filterDeniedTags
     )
 
     // Update search input
@@ -402,7 +459,7 @@ class FlowList {
     this.updateActiveFlow()
 
     // Update filter dropdown visual indicator
-    document.querySelector('#dropdown-filter > button').classList.toggle('text-bg-purple', toTs || filterTags.length || filterAppProto || filterSearch)
+    document.querySelector('#dropdown-filter > button').classList.toggle('text-bg-purple', toTs || filterRequiredTags.length || filterDeniedTags.length || filterAppProto || filterSearch)
 
     // Update service filter select state
     document.getElementById('services-select').value = services.join(',')
