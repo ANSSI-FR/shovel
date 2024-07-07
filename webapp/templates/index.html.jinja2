@@ -85,7 +85,23 @@
               </span>
               <input type="text" class="form-control" placeholder="glob, e.g. 'ex?mple'" id="filter-search">
             </div>
-            <div id="filter-tag"></div>
+            <div id="filter-tag">
+              <div class="card mb-2 bg-secondary-subtle rounded-0">
+                <header class="card-header d-flex justify-content-between py-1 px-2 small">Available tags</header>
+                <div class="card-body mb-0 p-2" id="filter-tag-available"></div>
+              </div>
+              <div class="card mb-2 bg-secondary-subtle rounded-0 border-success">
+                <header class="card-header d-flex justify-content-between py-1 px-2 small">Required tags</header>
+                <div class="card-body mb-0 p-2" id="filter-tag-require"></div>
+              </div>
+              <div class="card mb-2 bg-secondary-subtle rounded-0 border-danger">
+                <header class="card-header d-flex justify-content-between py-1 px-2 small">Denied tags</header>
+                <div class="card-body mb-0 p-2" id="filter-tag-deny"></div>
+              </div>
+              <p class="my-1">
+                <small class="fw-light fst-italic">Hold <kbd>Shift</kbd> to deny tag.</small>
+              </p>
+            </div>
           </div>
         </div>
       </div>
