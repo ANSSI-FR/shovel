@@ -39,8 +39,8 @@ alert ip any any -> $HOME_NET any (msg: "A CINI flag (ECSC 2024) was placed in o
 # fast_pattern overrides Suricata fast pattern determination.
 alert ip any any -> any any (msg: "tag"; file.data; content: "|00|asm"; startswith; fast_pattern; filemagic: "WebAssembly (wasm) binary"; metadata: tag WASM, color primary; sid: 1001;)
 alert ip any any -> any any (msg: "tag"; file.data; content: "|28 B5 2F FD|"; startswith; fast_pattern; filemagic: "Zstandard compressed data"; metadata: tag ZST, color primary; sid: 1002;)
-alert ip any any -> any any (msg: "tag"; file.data; content: "|37|PDF-"; depth:10; fast_pattern; filemagic: "PDF document"; metadata: tag PDF, color primary; sid: 1003;)
-alert ip any any -> any any (msg: "tag"; file.data; content: "|60|svg"; depth:4096; nocase; fast_pattern; filemagic: "SVG Scalable Vector Graphics image"; metadata: tag SVG, color primary; sid: 1004;)
+alert ip any any -> any any (msg: "tag"; file.data; content: "|25|PDF-"; depth:10; fast_pattern; filemagic: "PDF document"; metadata: tag PDF, color primary; sid: 1003;)
+alert ip any any -> any any (msg: "tag"; file.data; content: "|3C|svg"; depth:4096; nocase; fast_pattern; filemagic: "SVG Scalable Vector Graphics image"; metadata: tag SVG, color primary; sid: 1004;)
 alert ip any any -> any any (msg: "tag"; file.data; content: "|89|PNG|0d 0a|"; startswith; fast_pattern; filemagic: "PNG image"; metadata: tag PNG, color primary; sid: 1005;)
 alert ip any any -> any any (msg: "tag"; file.data; content: "|FD|7zXZ|00|"; startswith; fast_pattern; filemagic: "XZ compressed data"; metadata: tag XZ, color primary; sid: 1006;)
 alert ip any any -> any any (msg: "tag"; file.data; content: "|ff d8 ff|"; startswith; fast_pattern; filemagic: "JPEG image"; metadata: tag JPG, color primary; sid: 1007;)
