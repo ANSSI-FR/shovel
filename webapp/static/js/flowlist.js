@@ -22,7 +22,7 @@ class FlowList {
   async init () {
     // On left/right arrow keys, go to previous/next flow
     document.addEventListener('keydown', e => {
-      if (e.target.tagName !== 'INPUT' && !e.ctrlKey && !e.altKey) {
+      if (e.target.tagName !== 'INPUT' && !e.ctrlKey && !e.altKey && !e.shiftKey) {
         switch (e.code) {
           case 'ArrowLeft':
             if (this.selectedFlowId) {
