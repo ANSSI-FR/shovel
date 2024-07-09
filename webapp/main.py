@@ -70,7 +70,7 @@ async def api_flow_list(request):
     if search:
         cursor = await payload_database.execute(
             "SELECT flow_id FROM raw WHERE blob GLOB ?1",
-            (search,),
+            (f"*{search}*",),
         )
         rows = await cursor.fetchall()
         search_fid = [r["flow_id"] for r in rows]
