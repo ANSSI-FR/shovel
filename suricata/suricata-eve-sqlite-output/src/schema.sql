@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS "flow" (
     pcap_filename TEXT,
     proto TEXT NOT NULL,
     app_proto TEXT,
+    metadata TEXT,
     extra_data TEXT
 );
 CREATE TABLE IF NOT EXISTS "alert" (

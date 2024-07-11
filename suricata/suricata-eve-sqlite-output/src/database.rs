@@ -63,8 +63,8 @@ pub fn write_event(conn: MutexGuard<Connection>, buf: &str) -> Result<usize, rus
                 None => pcap_filename_cap.as_ref().map(|c| &c[1]).unwrap_or(""),
             };
             conn.execute(
-                "INSERT OR IGNORE INTO flow (id, src_ip, src_port, dest_ip, dest_port, pcap_filename, proto, app_proto, extra_data) \
-                values(?1->>'flow_id', ?2, ?1->>'src_port', ?3, ?1->>'dest_port', ?4, ?1->>'proto', ?1->>'app_proto', ?1->'flow')",
+                "INSERT OR IGNORE INTO flow (id, src_ip, src_port, dest_ip, dest_port, pcap_filename, proto, app_proto, metadata, extra_data) \
+                values(?1->>'flow_id', ?2, ?1->>'src_port', ?3, ?1->>'dest_port', ?4, ?1->>'proto', ?1->>'app_proto', ?1->'metadata', ?1->'flow')",
                 (buf, sc_ip_format(src_ip.to_string()), sc_ip_format(dest_ip.to_string()), pcap_filename),
             )
         },
