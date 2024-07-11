@@ -20,6 +20,9 @@ from starlette.templating import Jinja2Templates
 
 def row_to_dict(row: aiosqlite.Row) -> dict:
     row_dict = dict(row)
+    if "metadata" in row_dict:
+        metadata = json.loads(row_dict.pop("metadata"))
+        row_dict.update(metadata)
     extra_data = json.loads(row_dict.pop("extra_data"))
     row_dict.update(extra_data)
     return row_dict
@@ -118,7 +121,7 @@ async def api_flow_get(request):
     cursor = await eve_database.execute(
         (
             "SELECT id, ts_start, ts_end, src_ipport, dest_ipport, dest_port, "
-            "pcap_filename, proto, app_proto, extra_data "
+            "pcap_filename, proto, app_proto, metadata, extra_data "
             "FROM flow WHERE id = ?"
         ),
         [flow_id],

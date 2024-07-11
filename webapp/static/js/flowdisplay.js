@@ -19,6 +19,9 @@ const MAGIC_EXT = {
   'Zip archive': 'zip'
 }
 
+// Payloads are escaped using this function
+const htmlEscape = (str) => str.replace(/[\u00A0-\u9999<>&]/g, i => '&#' + i.charCodeAt(0) + ';')
+
 /**
  * Flow display
  */
@@ -255,7 +258,12 @@ class FlowDisplay {
         fetch(fileHref, {}).then((d) => d.arrayBuffer()).then((d) => {
           const byteArray = new Uint8Array(d)
           const utf8Decoder = new TextDecoder()
-          utf8View.textContent = utf8Decoder.decode(byteArray)
+          let content = htmlEscape(utf8Decoder.decode(byteArray))
+          flow.flow.flowvars?.forEach(data => {
+            const match = htmlEscape(data.match)
+            content = content.replaceAll(match, `<mark>${match}</mark>`)
+          })
+          utf8View.innerHTML = content
           hexView.textContent = this.renderHexDump(byteArray)
           hexView.classList.add('d-none')
           mainEl.appendChild(utf8View)
@@ -322,7 +330,12 @@ class FlowDisplay {
         codeElUtf8.classList.add('text-white')
         codeElUtf8.classList.toggle('bg-danger', chunk.server_to_client === 0)
         codeElUtf8.classList.toggle('bg-success', chunk.server_to_client === 1)
-        codeElUtf8.textContent = utf8Decoder.decode(byteArray)
+        let content = htmlEscape(utf8Decoder.decode(byteArray))
+        flow.flow.flowvars?.forEach(data => {
+          const match = htmlEscape(data.match)
+          content = content.replaceAll(match, `<mark>${match}</mark>`)
+        })
+        codeElUtf8.innerHTML = content
         utf8View.appendChild(codeElUtf8)
 
         const codeElHex = document.createElement('code')
