@@ -19,9 +19,6 @@ const MAGIC_EXT = {
   'Zip archive': 'zip'
 }
 
-// Payloads are escaped using this function
-const htmlEscape = (str) => str.replace(/[\u00A0-\u9999<>&]/g, i => '&#' + i.charCodeAt(0) + ';')
-
 /**
  * Flow display
  */
@@ -62,6 +59,30 @@ class FlowDisplay {
       }
     }
     return 'txt'
+  }
+
+  /**
+   * Highlight payload using provided keywords and current search param
+   *
+   * Escape HTML and highlighted keywords to prevent XSS
+   * @param {String} content
+   * @param {Array} keywords - Keywords to highlight
+   * @returns HTML representation
+   */
+  highlightPayload = (content, keywords) => {
+    const htmlEscape = (str) => str.replace(/[\u00A0-\u9999<>&]/g, i => '&#' + i.charCodeAt(0) + ';')
+    content = htmlEscape(content)
+    keywords?.forEach(k => {
+      k = htmlEscape(k)
+      content = content.replaceAll(k, `<mark>${k}</mark>`)
+    })
+    const url = new URL(document.location)
+    let search = url.searchParams.get('search')
+    if (search) {
+      search = htmlEscape(search)
+      content = content.replaceAll(search, `<mark>${search}</mark>`)
+    }
+    return content
   }
 
   /**
@@ -258,12 +279,7 @@ class FlowDisplay {
         fetch(fileHref, {}).then((d) => d.arrayBuffer()).then((d) => {
           const byteArray = new Uint8Array(d)
           const utf8Decoder = new TextDecoder()
-          let content = htmlEscape(utf8Decoder.decode(byteArray))
-          flow.flow.flowvars?.forEach(data => {
-            const match = htmlEscape(data.match)
-            content = content.replaceAll(match, `<mark>${match}</mark>`)
-          })
-          utf8View.innerHTML = content
+          utf8View.innerHTML = this.highlightPayload(utf8Decoder.decode(byteArray), flow.flow.flowvars?.map(d => d.match))
           hexView.textContent = this.renderHexDump(byteArray)
           hexView.classList.add('d-none')
           mainEl.appendChild(utf8View)
@@ -330,12 +346,7 @@ class FlowDisplay {
         codeElUtf8.classList.add('text-white')
         codeElUtf8.classList.toggle('bg-danger', chunk.server_to_client === 0)
         codeElUtf8.classList.toggle('bg-success', chunk.server_to_client === 1)
-        let content = htmlEscape(utf8Decoder.decode(byteArray))
-        flow.flow.flowvars?.forEach(data => {
-          const match = htmlEscape(data.match)
-          content = content.replaceAll(match, `<mark>${match}</mark>`)
-        })
-        codeElUtf8.innerHTML = content
+        codeElUtf8.innerHTML = this.highlightPayload(utf8Decoder.decode(byteArray), flow.flow.flowvars?.map(d => d.match))
         utf8View.appendChild(codeElUtf8)
 
         const codeElHex = document.createElement('code')
