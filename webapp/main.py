@@ -21,7 +21,7 @@ from starlette.templating import Jinja2Templates
 def row_to_dict(row: aiosqlite.Row) -> dict:
     row_dict = dict(row)
     if "metadata" in row_dict:
-        metadata = json.loads(row_dict.pop("metadata"))
+        metadata = json.loads(row_dict.pop("metadata") or "{}")
         row_dict.update(metadata)
     extra_data = json.loads(row_dict.pop("extra_data"))
     row_dict.update(extra_data)
