@@ -279,8 +279,11 @@ class FlowList {
 
   /**
    * Update tags in filters dropdown
+   * @param {Array} tags All available tags
+   * @param {Array} requiredTags Required tags in filter
+   * @param {Array} deniedTags Denied tags in filter
    */
-  updateTagFilter (tags) {
+  updateTagFilter (tags, requiredTags, deniedTags) {
     // Empty dropdown content
     ['filter-tag-available', 'filter-tag-require', 'filter-tag-deny'].forEach(id => {
       const el = document.getElementById(id)
@@ -291,9 +294,6 @@ class FlowList {
     })
 
     // Create tags and append to corresponding section of dropdown
-    const url = new URL(document.location)
-    const requiredTags = url.searchParams.getAll('tag_require')
-    const deniedTags = url.searchParams.getAll('tag_deny')
     tags.forEach(t => {
       const { tag, color } = t
       const badge = this.tagBadge(tag, color)
@@ -427,7 +427,7 @@ class FlowList {
     searchInput.classList.toggle('is-active', filterSearch !== null)
 
     await this.updateProtocolFilter(appProto)
-    this.updateTagFilter(tags)
+    this.updateTagFilter(tags, filterTagsRequire, filterTagsDeny)
     await this.updateFlowsList(flows, tags)
     this.updateActiveFlow()
 
