@@ -212,10 +212,10 @@ class FlowDisplay {
       document.querySelector('#display-app > header > h1 > a > span').textContent = appProto.toUpperCase()
       const body = document.querySelector('#display-app > div > pre')
       body.textContent = ''
+
+      // In the case of HTTP, add some metadata at the top of the card
       if (appProto === 'http' || appProto === 'http2') {
         document.querySelector('#display-app > header > a').href = `api/replay-http/${flowId}`
-
-        // Print some useful headers
         const headerUserAgents = new Set()
         const headerServers = new Set()
         const headerCookies = new Set()
@@ -228,101 +228,92 @@ class FlowDisplay {
         body.textContent += headerUserAgents.size ? `User-Agent: ${[...headerUserAgents].join(', ')}\n` : ''
         body.textContent += headerServers.size ? `Server: ${[...headerServers].join(', ')}\n` : ''
         body.textContent += headerCookies.size ? `Cookie: ${[...headerCookies].join(', ')}\n\n` : '\n'
-
-        // Print requests
-        flow[appProto].forEach((data, txCount) => {
-          const linkEl1 = document.createElement('a')
-          linkEl1.classList.add('text-decoration-none')
-          linkEl1.href = `#fileinfo-${txCount}`
-          linkEl1.textContent = `${data.http_method ?? '?'} `
-          body.appendChild(linkEl1)
-          const spanEl = document.createElement('span')
-          spanEl.textContent = `http://${data.hostname}:${data.http_port ?? flow.flow.dest_port}${data.url ?? ''} ${data.protocol ?? '?'}  ◄ ${data.status ?? '?'}\n`
-          body.appendChild(spanEl)
-        })
-      } else {
-        // Directly pretty-print Suricata app protocol dissection
-        flow[appProto].forEach(data => {
-          body.textContent += `${JSON.stringify(data, null, 4)}\n`
-        })
-      }
-    }
-
-    // Fileinfo cards, inside application protocol card
-    const fileinfoDiv = document.getElementById('display-fileinfos')
-    while (fileinfoDiv.lastChild) {
-      fileinfoDiv.removeChild(fileinfoDiv.lastChild)
-    }
-    flow.fileinfo?.forEach(data => {
-      let mainEl
-      const fileHref = `filestore/${data.sha256.slice(0, 2)}/${data.sha256}`
-      const ext = this.getExtFromMagic(data.magic ?? '')
-      const cardBtns = document.createElement('span')
-      if (['gif', 'jpg', 'png', 'svg'].includes(ext)) {
-        mainEl = document.createElement('img')
-        mainEl.classList.add('img-payload')
-        mainEl.src = fileHref
-      } else if (ext === 'pdf') {
-        mainEl = document.createElement('iframe')
-        mainEl.width = 500
-        mainEl.height = 700
-        fetch(fileHref, {}).then((d) => d.blob()).then((blob) => {
-          blob = blob.slice(0, blob.size, 'application/pdf')
-          const objectURL = URL.createObjectURL(blob)
-          mainEl.src = objectURL
-        })
-      } else {
-        // Unknown format, also prepare hexdump view
-        mainEl = document.createElement('div')
-        const utf8View = document.createElement('code')
-        const hexView = document.createElement('code')
-        fetch(fileHref, {}).then((d) => d.arrayBuffer()).then((d) => {
-          const byteArray = new Uint8Array(d)
-          const utf8Decoder = new TextDecoder()
-          utf8View.innerHTML = this.highlightPayload(utf8Decoder.decode(byteArray), flow.flow.flowvars?.map(d => d.match))
-          hexView.textContent = this.renderHexDump(byteArray)
-          hexView.classList.add('d-none')
-          mainEl.appendChild(utf8View)
-          mainEl.appendChild(hexView)
-        })
-
-        // Add utf-8/hex switch button
-        const switchViewBtn = document.createElement('a')
-        switchViewBtn.classList.add('text-nowrap')
-        switchViewBtn.classList.add('pe-2')
-        switchViewBtn.href = '#'
-        switchViewBtn.textContent = 'Hex'
-        switchViewBtn.addEventListener('click', e => {
-          const wasHex = utf8View.classList.contains('d-none')
-          hexView.classList.toggle('d-none', wasHex)
-          utf8View.classList.toggle('d-none', !wasHex)
-          e.target.textContent = wasHex ? 'Hex' : 'UTF-8'
-          e.preventDefault()
-        })
-        cardBtns.appendChild(switchViewBtn)
       }
 
-      const downloadBtn = document.createElement('a')
-      downloadBtn.classList.add('text-nowrap')
-      downloadBtn.href = fileHref
-      downloadBtn.download = `${data.filename?.replace(/[^A-Za-z0-9]/g, '_')}.${ext}`
-      downloadBtn.textContent = 'Download file'
-      cardBtns.appendChild(downloadBtn)
+      flow[appProto].forEach((data, txId) => {
+        const spanEl = document.createElement('span')
+        if (appProto === 'http' || appProto === 'http2') {
+          // Format HTTP dissection
+          spanEl.classList.add('fw-bold')
+          spanEl.textContent = `${data.http_method ?? '?'} http://${data.hostname}:${data.http_port ?? flow.flow.dest_port}${data.url ?? ''} ${data.protocol ?? '?'}  ◄ ${data.status ?? '?'}\n`
+        } else {
+          // Directly pretty-print JSON Suricata app protocol dissection
+          spanEl.textContent += `${JSON.stringify(data, null, 4)}\n`
+        }
+        body.appendChild(spanEl)
 
-      const cardHeader = document.createElement('header')
-      cardHeader.classList.add('card-header', 'd-flex', 'justify-content-between')
-      cardHeader.textContent = data.magic ? `File ${data.filename}, ${data.magic}` : `File ${data.filename}`
-      cardHeader.appendChild(cardBtns)
-      const cardBody = document.createElement('pre')
-      cardBody.classList.add('card-body', 'mb-0')
-      cardBody.appendChild(mainEl)
-      const cardEl = document.createElement('div')
-      cardEl.classList.add('card', 'm-3', 'bg-secondary-subtle', 'font-monospace', 'border-warning')
-      cardEl.id = `fileinfo-${data.tx_id}`
-      cardEl.appendChild(cardHeader)
-      cardEl.appendChild(cardBody)
-      fileinfoDiv.appendChild(cardEl)
-    })
+        // Add corresponding fileinfo
+        flow.fileinfo?.filter(d => d.tx_id === txId).forEach(data => {
+          let mainEl
+          const fileHref = `filestore/${data.sha256.slice(0, 2)}/${data.sha256}`
+          const ext = this.getExtFromMagic(data.magic ?? '')
+          const cardBtns = document.createElement('span')
+          if (['gif', 'jpg', 'png', 'svg'].includes(ext)) {
+            mainEl = document.createElement('img')
+            mainEl.classList.add('img-payload')
+            mainEl.src = fileHref
+          } else if (ext === 'pdf') {
+            mainEl = document.createElement('iframe')
+            mainEl.width = 500
+            mainEl.height = 700
+            fetch(fileHref, {}).then((d) => d.blob()).then((blob) => {
+              blob = blob.slice(0, blob.size, 'application/pdf')
+              const objectURL = URL.createObjectURL(blob)
+              mainEl.src = objectURL
+            })
+          } else {
+            // Unknown format, also prepare hexdump view
+            mainEl = document.createElement('div')
+            const utf8View = document.createElement('code')
+            const hexView = document.createElement('code')
+            fetch(fileHref, {}).then((d) => d.arrayBuffer()).then((d) => {
+              const byteArray = new Uint8Array(d)
+              const utf8Decoder = new TextDecoder()
+              utf8View.innerHTML = this.highlightPayload(utf8Decoder.decode(byteArray), flow.flow.flowvars?.map(d => d.match))
+              hexView.textContent = this.renderHexDump(byteArray)
+              hexView.classList.add('d-none')
+              mainEl.appendChild(utf8View)
+              mainEl.appendChild(hexView)
+            })
+
+            // Add utf-8/hex switch button
+            const switchViewBtn = document.createElement('a')
+            switchViewBtn.classList.add('text-nowrap')
+            switchViewBtn.classList.add('pe-2')
+            switchViewBtn.href = '#'
+            switchViewBtn.textContent = 'Hex'
+            switchViewBtn.addEventListener('click', e => {
+              const wasHex = utf8View.classList.contains('d-none')
+              hexView.classList.toggle('d-none', wasHex)
+              utf8View.classList.toggle('d-none', !wasHex)
+              e.target.textContent = wasHex ? 'Hex' : 'UTF-8'
+              e.preventDefault()
+            })
+            cardBtns.appendChild(switchViewBtn)
+          }
+
+          const downloadBtn = document.createElement('a')
+          downloadBtn.classList.add('text-nowrap')
+          downloadBtn.href = fileHref
+          downloadBtn.download = `${data.filename?.replace(/[^A-Za-z0-9]/g, '_')}.${ext}`
+          downloadBtn.textContent = 'Download file'
+          cardBtns.appendChild(downloadBtn)
+
+          const cardHeader = document.createElement('header')
+          cardHeader.classList.add('card-header', 'd-flex', 'justify-content-between', 'py-1', 'px-2', 'small')
+          cardHeader.textContent = `File ${data.filename}` + (data.magic ? `, ${data.magic}` : '')
+          cardHeader.appendChild(cardBtns)
+          const cardBody = document.createElement('pre')
+          cardBody.classList.add('card-body', 'mb-0', 'p-2')
+          cardBody.appendChild(mainEl)
+          const cardEl = document.createElement('div')
+          cardEl.classList.add('card', 'mt-1', 'mb-2', 'ms-3', 'bg-secondary-subtle', 'font-monospace', 'rounded-0')
+          cardEl.appendChild(cardHeader)
+          cardEl.appendChild(cardBody)
+          body.appendChild(cardEl)
+        })
+      })
+    }
 
     // Raw data card
     if (['TCP', 'UDP'].includes(flow.flow.proto)) {
