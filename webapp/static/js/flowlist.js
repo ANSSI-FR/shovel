@@ -158,18 +158,38 @@ class FlowList {
       const tag = e.target.closest('a')?.dataset.tag
       if (tag) {
         const url = new URL(document.location)
-        const activeTags = url.searchParams.getAll('tag')
-        if (activeTags.includes(tag)) {
-          // Remove tag
-          url.searchParams.delete('tag')
-          activeTags.forEach(t => {
+        const requiredTags = url.searchParams.getAll('tag_require')
+        const deniedTags = url.searchParams.getAll('tag_deny')
+        if (requiredTags.includes(tag)) {
+          // Remove tag from required tags
+          url.searchParams.delete('tag_require')
+          requiredTags.forEach(t => {
             if (t !== tag) {
-              url.searchParams.append('tag', t)
+              url.searchParams.append('tag_require', t)
             }
           })
+          // If shift is pressed, then add to denied tags
+          if (e.shiftKey) {
+            url.searchParams.append('tag_deny', tag)
+          }
+        } else if (deniedTags.includes(tag)) {
+          // Remove tag from denied tags
+          url.searchParams.delete('tag_deny')
+          deniedTags.forEach(t => {
+            if (t !== tag) {
+              url.searchParams.append('tag_deny', t)
+            }
+          })
+          // If shift is pressed, then add to required tags
+          if (e.shiftKey) {
+            url.searchParams.append('tag_require', tag)
+          }
+        } else if (e.shiftKey) {
+          // Add tag to denied tags
+          url.searchParams.append('tag_deny', tag)
         } else {
-          // Add tag
-          url.searchParams.append('tag', tag)
+          // Add tag to required tags
+          url.searchParams.append('tag_require', tag)
         }
         window.history.pushState(null, '', url.href)
         this.update()
@@ -262,25 +282,33 @@ class FlowList {
    */
   updateTagFilter (tags) {
     // Empty dropdown content
-    const tagFilterDropdown = document.getElementById('filter-tag')
-    while (tagFilterDropdown.lastChild) {
-      tagFilterDropdown.removeChild(tagFilterDropdown.lastChild)
-    }
+    ['filter-tag-available', 'filter-tag-require', 'filter-tag-deny'].forEach(id => {
+      const el = document.getElementById(id)
+      el.parentElement.classList.add('d-none')
+      while (el.lastChild) {
+        el.removeChild(el.lastChild)
+      }
+    })
 
+    // Create tags and append to corresponding section of dropdown
+    const url = new URL(document.location)
+    const requiredTags = url.searchParams.getAll('tag_require')
+    const deniedTags = url.searchParams.getAll('tag_deny')
     tags.forEach(t => {
-      // Create tag and append to dropdown
       const { tag, color } = t
-      const url = new URL(document.location)
-      const activeTags = url.searchParams.getAll('tag')
       const badge = this.tagBadge(tag, color)
-      badge.classList.add('border', 'border-2')
-      badge.classList.toggle('border-purple', activeTags.includes(tag))
-      badge.classList.toggle('text-bg-purple', activeTags.includes(tag))
       const link = document.createElement('a')
       link.href = '#'
       link.dataset.tag = tag
       link.appendChild(badge)
-      tagFilterDropdown.appendChild(link)
+      let destElement = document.getElementById('filter-tag-available')
+      if (requiredTags.includes(tag)) {
+        destElement = document.getElementById('filter-tag-require')
+      } else if (deniedTags.includes(tag)) {
+        destElement = document.getElementById('filter-tag-deny')
+      }
+      destElement.appendChild(link)
+      destElement.parentElement.classList.remove('d-none')
     })
   }
 
@@ -381,14 +409,16 @@ class FlowList {
     const services = url.searchParams.getAll('service')
     const filterAppProto = url.searchParams.get('app_proto')
     const filterSearch = url.searchParams.get('search')
-    const filterTags = url.searchParams.getAll('tag')
+    const filterTagsRequire = url.searchParams.getAll('tag_require')
+    const filterTagsDeny = url.searchParams.getAll('tag_deny')
     const { flows, appProto, tags } = await this.apiClient.listFlows(
       fromTs ? Number(fromTs) : null,
       toTs ? Number(toTs) : null,
       services,
       filterAppProto,
       filterSearch,
-      filterTags
+      filterTagsRequire,
+      filterTagsDeny
     )
 
     // Update search input
@@ -402,7 +432,7 @@ class FlowList {
     this.updateActiveFlow()
 
     // Update filter dropdown visual indicator
-    document.querySelector('#dropdown-filter > button').classList.toggle('text-bg-purple', toTs || filterTags.length || filterAppProto || filterSearch)
+    document.querySelector('#dropdown-filter > button').classList.toggle('text-bg-purple', toTs || filterTagsRequire.length || filterTagsDeny.length || filterAppProto || filterSearch)
 
     // Update service filter select state
     document.getElementById('services-select').value = services.join(',')
