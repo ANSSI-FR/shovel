@@ -215,14 +215,14 @@ async def api_replay_http(request):
 
     # For each HTTP request, load client payload if it exists
     data = []
-    for row in rows:
+    for tx_id, row in enumerate(rows):
         req = row_to_dict(row)
         req["rq_content"] = None
         if req["http_method"] in ["POST"]:
-            # Get associated fileinfo
+            # First result should be the request
             cursor = await eve_database.execute(
-                "SELECT extra_data FROM fileinfo WHERE flow_id = ? ORDER BY id",
-                [flow_id],
+                "SELECT extra_data FROM fileinfo WHERE flow_id = ? AND extra_data->>'tx_id' = ? ORDER BY id",
+                [flow_id, tx_id],
             )
             fileinfo_first_event = await cursor.fetchone()
             if not fileinfo_first_event:
