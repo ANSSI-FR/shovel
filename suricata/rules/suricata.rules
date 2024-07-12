@@ -57,6 +57,8 @@ alert ip any any -> any any (msg: "tag"; file.data; content: "PK|03 04|"; starts
 alert ip any any -> any any (msg: "tag"; file.data; content: "PK|03 04|"; startswith; fast_pattern; filemagic: "Zip archive"; metadata: tag ZIP, color primary; sid: 1015;)
 alert ip any any -> any any (msg: "tag"; file.data; content: "Vgm|20|"; startswith; fast_pattern; filemagic: "VGM Video Game Music"; metadata: tag VGM, color primary; sid: 1016;)
 alert ip any any -> any any (msg: "tag"; file.data; content: "wOF"; startswith; fast_pattern; filemagic: "Web Open Font"; metadata: tag WOFF, color primary; sid: 1017;)
+alert ip any any -> any any (msg: "tag"; file.data; content: "|7F|ELF|02 01 01 00 00 00 00 00 00 00 00 00|"; startswith; fast_pattern; filemagic: "ELF"; metadata: tag ELF, color primary; sid: 1018;)
+alert ip any any -> any any (msg: "tag"; file.data; content: "f0VMRgIBAQAAAAAAAAAAAA"; metadata: tag ELF B64, color primary; sid: 1019;)
 
 # Tag HTTP methods and status (sid 2001-3000)
 alert http any any -> any any (msg: "tag"; http.method; content: "POST"; startswith; metadata: tag POST, color info; sid: 2001;)
@@ -141,7 +143,8 @@ alert ip any any -> any any (msg: "Found SQL 'CAST(. as bytea)'"; content: "CAST
 alert ip any any -> any any (msg: "Found SQL 'COALESCE('"; content: "COALESCE("; nocase; metadata: tag SQL COAL, color warning; sid: 4306;)
 alert ip any any -> any any (msg: "Found SQL 'VARCHAR('"; content: "VARCHAR("; nocase; metadata: tag SQL VARC, color warning; sid: 4307;)
 alert ip any any -> any any (msg: "Found XML '<!ENTITY'"; content: "|3c 21|ENTITY"; nocase; metadata: tag XML ENTITY, color warning; sid: 4401;)
-alert ip any any -> any any (msg: "Found XML '<!ENTITY' (base64)"; content: "PCFFTlRJVF"; nocase; metadata: tag XML ENTITY, color warning; sid: 4402;)
+alert ip any any -> any any (msg: "Found XML '<!ENTITY' (URL encoded)"; content: "|25|3C|25|21ENTITY"; nocase; metadata: tag XML ENTITY, color warning; sid: 4402;)
+alert ip any any -> any any (msg: "Found XML '<!ENTITY' (base64)"; content: "PCFFTlRJVF"; nocase; metadata: tag XML ENTITY, color warning; sid: 4403;)
 
 # Common side-channel indicators
 alert ip any any -> any any (msg: "tag"; flow.age:>10; flowbits: isnotset, slowflow; flowbits: set, slowflow; metadata: tag SLOW, color warning; sid: 5001;)
