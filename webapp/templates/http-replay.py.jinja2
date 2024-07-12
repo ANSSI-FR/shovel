@@ -22,10 +22,16 @@ Corresponding flow id: {{ data[0].flow_id }}
 Service: {{ ns.service_name }}
 """
 
-# Load variables
+# Load arguments
 # EXTRA is an array of the flagids for current service and team
-HOST = os.getenv("TARGET_IP")
-EXTRA = json.loads(os.getenv("TARGET_EXTRA", "[]"))
+if len(sys.argv) < 2:
+    print(f'Usage: {sys.argv[0]} <target> [flag_id]')
+    sys.exit(1)
+HOST = sys.argv[1]
+if len(sys.argv) > 2:
+    EXTRA = json.loads(bytes.fromhex(sys.argv[2]).decode())
+else:
+    EXTRA = []
 
 # FIXME: You should identify if a flagid was used in the following
 # payload. If it is the case, then you should loop using EXTRA.
@@ -52,6 +58,6 @@ r = s.{{ req.http_method | lower }}(
 )
 if r.status_code != {{ req.status }}:
     print(f"[!] Request returned wrong status code {r.status_code}, expected {{ req.status }}")
-print(r.text)
+print(r.text, flush=True)
 
 {% endfor -%}

@@ -22,10 +22,16 @@ Corresponding flow id: {{ data.flow_id }}
 Service: {{ ns.service_name }}
 """
 
-# Load variables
+# Load arguments
 # EXTRA is an array of the flagids for current service and team
-HOST = os.getenv("TARGET_IP")
-EXTRA = json.loads(os.getenv("TARGET_EXTRA", "[]"))
+if len(sys.argv) < 2:
+    print(f'Usage: {sys.argv[0]} <target> [flag_id]')
+    sys.exit(1)
+HOST = sys.argv[1]
+if len(sys.argv) > 2:
+    EXTRA = json.loads(bytes.fromhex(sys.argv[2]).decode())
+else:
+    EXTRA = []
 
 # Timeout is important to prevent stall
 socket.setdefaulttimeout(2)
@@ -50,7 +56,7 @@ s.sendall({{ payload | safe }})
 data = b""
 while not data.endswith({{ payload[-16:] | safe }}):
     data += s.recv(1024)
-print(data)
+print(data, flush=True)
 {%- endif %}
 {%- endfor %}
 
