@@ -131,8 +131,13 @@ alert ip any any -> any any (msg: "Found PHP '$_POST'"; content: "|24 5f|POST"; 
 alert ip any any -> any any (msg: "Found PHP 'echo system'"; content: "echo system"; nocase; metadata: tag PHP SYSTEM, color warning; sid: 4255;)
 alert ip any any -> any any (msg: "Found PHP 'file_get_contents' call"; content: "file_get_contents"; nocase; metadata: tag PHP FGC, color warning; sid: 4256;)
 alert ip any any -> any any (msg: "Found PHP 'halt_compiler' call"; content: "halt_compiler"; nocase; metadata: tag PHP HC, color warning; sid: 4257;)
-alert ip any any -> any any (msg: "Found XML '<!ENTITY'"; content: "|3c 21|ENTITY"; nocase; metadata: tag XML ENTITY, color warning; sid: 4301;)
-alert ip any any -> any any (msg: "Found XML '<!ENTITY' (base64)"; content: "PCFFTlRJVF"; nocase; metadata: tag XML ENTITY, color warning; sid: 4302;)
+alert ip any any -> any any (msg: "Found SQL 'array_to_string'"; content: "array_to_string"; nocase; metadata: tag SQL A2S, color warning; sid: 4301;)
+alert ip any any -> any any (msg: "Found SQL 'regexp_count'"; content: "regexp_count"; nocase; metadata: tag SQL REGC, color warning; sid: 4302;)
+alert ip any any -> any any (msg: "Found SQL ' LIMIT 1'"; content: " LIMIT 1"; nocase; metadata: tag SQL LIM1, color warning; sid: 4303;)
+alert ip any any -> any any (msg: "Found SQL '::bytea'"; content: "|3A 3A|bytea"; nocase; metadata: tag SQL BYTEA, color warning; sid: 4304;)
+alert ip any any -> any any (msg: "Found SQL 'CAST(. as bytea)'"; content: "CAST("; content: " as bytea)"; nocase; metadata: tag SQL CAST, color warning; sid: 4305;)
+alert ip any any -> any any (msg: "Found XML '<!ENTITY'"; content: "|3c 21|ENTITY"; nocase; metadata: tag XML ENTITY, color warning; sid: 4401;)
+alert ip any any -> any any (msg: "Found XML '<!ENTITY' (base64)"; content: "PCFFTlRJVF"; nocase; metadata: tag XML ENTITY, color warning; sid: 4402;)
 
 # Common side-channel indicators
 alert ip any any -> any any (msg: "tag"; flow.age:>10; flowbits: isnotset, slowflow; flowbits: set, slowflow; metadata: tag SLOW, color warning; sid: 5001;)
