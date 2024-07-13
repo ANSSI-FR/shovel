@@ -243,7 +243,7 @@ class FlowDisplay {
         body.appendChild(spanEl)
 
         // Add corresponding fileinfo
-        flow.fileinfo?.filter(d => d.tx_id === txId).forEach(data => {
+        flow.fileinfo?.filter(d => d.tx_id === txId).forEach((data, i) => {
           let mainEl
           const fileHref = `filestore/${data.sha256.slice(0, 2)}/${data.sha256}`
           const ext = this.getExtFromMagic(data.magic ?? '')
@@ -299,17 +299,12 @@ class FlowDisplay {
           downloadBtn.textContent = 'Download file'
           cardBtns.appendChild(downloadBtn)
 
-          const cardHeader = document.createElement('header')
-          cardHeader.classList.add('card-header', 'd-flex', 'justify-content-between', 'py-1', 'px-2', 'small')
-          cardHeader.textContent = `File ${data.filename}` + (data.magic ? `, ${data.magic}` : '')
-          cardHeader.appendChild(cardBtns)
-          const cardBody = document.createElement('pre')
-          cardBody.classList.add('card-body', 'mb-0', 'p-2')
-          cardBody.appendChild(mainEl)
-          const cardEl = document.createElement('div')
-          cardEl.classList.add('card', 'mt-1', 'mb-2', 'ms-3', 'bg-secondary-subtle', 'font-monospace', 'rounded-0')
-          cardEl.appendChild(cardHeader)
-          cardEl.appendChild(cardBody)
+          const cardEl = document.getElementById('display-app-fileinfo').content.cloneNode(true)
+          cardEl.querySelector('header > a').href = `#fileinfo-${txId}-${i}`
+          cardEl.querySelector('header > a > span').textContent = `File ${data.filename}` + (data.magic ? `, ${data.magic}` : '')
+          cardEl.querySelector('header').appendChild(cardBtns)
+          cardEl.querySelector('div.collapse').id = `fileinfo-${txId}-${i}`
+          cardEl.querySelector('pre').appendChild(mainEl)
           body.appendChild(cardEl)
         })
       })
