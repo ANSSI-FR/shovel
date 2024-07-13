@@ -3,11 +3,16 @@
   SPDX-License-Identifier: GPL-3.0-only
 #}
 {#- Get service name from hostname:port #}
-{%- set ns = namespace(service_name="unknown") %}
+{%- set ns = namespace(service_name="unknown", user_agent="CHANGE ME") %}
 {%- for name, ipaddr_ports in services.items() %}
-{%- if (data[0].hostname + ":" + ((data[0].http_port or 80) | string)) in ipaddr_ports %}
-{%- set ns.service_name = name + "-" + ((data[0].http_port or 80) | string) %}
-{%- endif %}
+{%-   if (data[0].hostname + ":" + ((data[0].http_port or 80) | string)) in ipaddr_ports %}
+{%-     set ns.service_name = name + "-" + ((data[0].http_port or 80) | string) %}
+{%-   endif %}
+{%- endfor %}
+{%- for header in data[0].request_headers %}
+{%-   if (header.name | lower) == "user-agent" %}
+{%-     set ns.user_agent = header.value -%}
+{%-   endif %}
 {%- endfor -%}
 #!/usr/bin/env python3
 # Filename: replay-{{ ns.service_name }}-{{ data[0].flow_id }}.py
@@ -38,9 +43,9 @@ else:
 #for flag_id in EXTRA:
 
 s = requests.Session()
+s.headers["User-Agent"] = "{{ ns.user_agent }}"
 
 {% for req in data -%}
-# Timeout is important to prevent stall
 print(f"[+] {{ req.http_method }} http://{HOST}:{{ req.http_port or "80" }}{{ req.url }}", file=sys.stderr)
 r = s.{{ req.http_method | lower }}(
     f"http://{HOST}:{{ req.http_port or "80" }}{{ req.url }}",
@@ -49,12 +54,12 @@ r = s.{{ req.http_method | lower }}(
     {%- endif %}
     headers={
         {%- for header in req.request_headers %}
-        {%- if (header.name | lower) not in ["connection", "content-length", "host"] %}
+        {%- if (header.name | lower) not in ["connection", "content-length", "host", "user-agent"] %}
         "{{ header.name }}": "{{ header.value }}",
         {%- endif %}
         {%- endfor %}
     },
-    timeout=2,
+    timeout=2,  # prevent stall
 )
 if r.status_code != {{ req.status }}:
     print(f"[!] Request returned wrong status code {r.status_code}, expected {{ req.status }}")
