@@ -143,10 +143,6 @@ async def api_flow_get(request):
     result = {"flow": row_to_dict(flow)}
     app_proto = result["flow"].get("app_proto")
 
-    # Make sure `pcap_filename` is empty if PCAP_FILE=false
-    if not PCAP_FILE:
-        result["flow"]["pcap_filename"] = ""
-
     # Get associated fileinfo
     # See https://docs.suricata.io/en/suricata-6.0.9/file-extraction/file-extraction.html
     if app_proto in ["http", "http2", "smtp", "ftp", "nfs", "smb"]:
@@ -325,7 +321,6 @@ EVE_DB_URI = config(
 PAYLOAD_DB_URI = config(
     "PAYLOAD_DB_URI", cast=str, default="file:../suricata/output/payload.db?mode=ro"
 )
-PCAP_FILE = config("PCAP_FILE", cast=bool, default=True)
 CTF_CONFIG = {
     "start_date": config("CTF_START_DATE", cast=str, default="1970-01-01T00:00+00:00"),
     "tick_length": config("CTF_TICK_LENGTH", cast=int, default=0),
@@ -350,9 +345,7 @@ app = Starlette(
         Route("/api/replay-http/{flow_id:int}", api_replay_http),
         Route("/api/replay-raw/{flow_id:int}", api_replay_raw),
         Mount("/static", StaticFiles(directory="static")),
-        Mount(
-            "/input_pcaps", StaticFiles(directory="../input_pcaps", check_dir=PCAP_FILE)
-        ),
+        Mount("/input_pcaps", StaticFiles(directory="../input_pcaps", check_dir=False)),
         Mount("/filestore", StaticFiles(directory="../suricata/output/filestore")),
     ],
     lifespan=lifespan,
