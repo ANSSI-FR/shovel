@@ -14,7 +14,7 @@ function setup (args)
     SCLogNotice("Initializing plugin TCP payload SQLite Output; author=ANSSI; license=GPL-2.0")
 
     -- open database in WAL mode and init schema
-    local sqlite3 = require("lsqlite3")
+    sqlite3 = require("lsqlite3")
     database = sqlite3.open(SCLogPath() .. "/payload.db")
     assert(database:exec([[
         PRAGMA journal_mode=wal;
