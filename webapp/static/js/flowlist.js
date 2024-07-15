@@ -153,6 +153,20 @@ class FlowList {
       this.update()
     })
 
+    // On CTRL-MAJ-F key, search selection
+    document.addEventListener('keyup', e => {
+      if (e.target.tagName !== 'INPUT' && e.ctrlKey && e.shiftKey && !e.altKey && e.code === 'KeyF') {
+        const sel = window.getSelection().toString()
+        if (sel) {
+          const url = new URL(document.location)
+          url.searchParams.set('search', sel)
+          window.history.pushState(null, '', url.href)
+          this.update()
+        }
+        e.preventDefault()
+      }
+    })
+
     // On tags filter change, update URL then update flows list
     document.getElementById('filter-tag').addEventListener('click', e => {
       const tag = e.target.closest('a')?.dataset.tag

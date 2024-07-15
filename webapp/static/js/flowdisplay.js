@@ -35,8 +35,8 @@ class FlowDisplay {
     this.tickLength = Number(appData.tickLength)
 
     // On V key, switch view
-    document.addEventListener('keydown', e => {
-      if (e.target.tagName !== 'INPUT' && !e.ctrlKey && !e.altKey && e.code === 'KeyV') {
+    document.addEventListener('keyup', e => {
+      if (e.target.tagName !== 'INPUT' && !e.ctrlKey && !e.shiftKey && !e.altKey && e.code === 'KeyV') {
         if (document.getElementById('display-raw-hex-tab').classList.contains('active')) {
           document.getElementById('display-raw-utf8-tab').click()
         } else {
