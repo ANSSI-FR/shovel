@@ -1,6 +1,6 @@
 <!--
 Copyright (C) 2023  ANSSI
-SPDX-License-Identifier: GPL-3.0-only
+SPDX-License-Identifier: GPL-2.0-or-later
 -->
 <svg width="32" height="32" version="1.1" viewBox="0 0 8.467 8.467" xmlns="http://www.w3.org/2000/svg">
     <path d="m6.995 1.476-3.97 3.982" fill="none" stroke="#ae6439" stroke-linecap="round" stroke-linejoin="round"/>

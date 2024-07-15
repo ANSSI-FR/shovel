@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Copyright (C) 2023-2024  ANSSI
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: GPL-2.0-or-later
 
 import base64
 import contextlib
