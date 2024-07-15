@@ -29,13 +29,24 @@ some opinionated choices for the frontend. This has a few nice implications:
   - filters based on libmagic, e.g. quickly filter flows containing PDF documents or PNG images,
   - no heavy build tools needed, Shovel is easy to tweak.
 
-Moreover, Shovel is batteries-included with Grafana visualizations and some Suricata alert rules.
+Moreover, Shovel is batteries-included with some Suricata alert rules.
+
+```
+      ┌────────────────────────┐
+      │ Suricata with:         │   eve.db    ┌───────────────┐
+pcap  │  - Eve SQLite plugin   ├────────────►│               │
+─────►│  - TCP payloads plugin │ payload.db  │ Python webapp │
+      │  - UDP payloads plugin ├────────────►│               │
+      └────────────────────────┘             └────▲──────────┘
+                                            .env  │
+                                            ──────┘
+```
 
 ## Setup
 
 ### 0. Before the Capture-the-Flag event begins
 
-Copy `example.env` to `.env` and tweak the configuration parameters.
+Copy `example.env` to `.env` and update the configuration parameters.
 Also add the flag format in `suricata/rules/suricata.rules` if needed.
 
 If you are playing a CTF using an IPv6 network, you might want to [enable IPv6 support in Docker deamon](https://docs.docker.com/config/daemon/ipv6/) before the CTF starts.
