@@ -9,11 +9,15 @@ services:
       - "./suricata/rules:/suricata/rules:ro"
       - "./suricata/output:/suricata/output:rw"
     environment:
-      # Include the name of the input pcap file in Suricata EVE logs (default: true)
-      PCAP_FILE: "true"
+      # Include the name of the input pcap file in Suricata EVE logs (default: false)
+      PCAP_FILE: "false"
       # Make Suricata wait for new pcap files (default: true)
       # You need to disable this to see the last few flows, else Suricata will wait without logging them.
       PCAP_FILE_CONTINUOUS: "true"
+      # use a PCAP-over-IP connection
+      # PCAP_OVER_IP: "host.docker.internal:4242"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   webapp:
     build: ./webapp

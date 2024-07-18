@@ -2,6 +2,8 @@
 # Copyright (C) 2024  ANSSI
 # SPDX-License-Identifier: CC0-1.0
 
+set -x
+
 # Arguments override default Suricata configuration,
 # see https://github.com/OISF/suricata/blob/suricata-7.0.5/suricata.yaml.in
 
@@ -9,9 +11,8 @@ SURICATA_PARAM="--runmode=single --no-random"
 if [ "${PCAP_FILE_CONTINUOUS:=true}" = true ]; then
     SURICATA_PARAM="${SURICATA_PARAM} --pcap-file-continuous"
 fi
-echo "Starting Suricata with PCAP_FILE=${PCAP_FILE:=true} PCAP_FILE_CONTINUOUS=${PCAP_FILE_CONTINUOUS:=true}"
-suricata -r input_pcaps \
-    -S suricata/rules/suricata.rules \
+
+SURICATA_PARAM="-S suricata/rules/suricata.rules \
     -l suricata/output \
     --set plugins.0=suricata/libeve_sqlite_output.so \
     --set outputs.0.fast.enabled=no \
@@ -36,5 +37,15 @@ suricata -r input_pcaps \
     --set app-layer.protocols.dnp3.enabled=yes \
     --set app-layer.protocols.enip.enabled=yes \
     --set app-layer.protocols.sip.enabled=yes \
-    --set stream.reassembly.depth=50mb \
-    ${SURICATA_PARAM}
+    --set stream.reassembly.depth=50mb"
+
+
+echo "Starting Suricata with PCAP_FILE=${PCAP_FILE:=true} PCAP_FILE_CONTINUOUS=${PCAP_FILE_CONTINUOUS:=true}"
+
+if [ ! -z "${PCAP_OVER_IP}" ]; then
+    socat TCP:${PCAP_OVER_IP} STDOUT | suricata -r /dev/stdin ${SURICATA_PARAM}
+else
+    suricata -r input_pcaps ${SURICATA_PARAM}
+fi
+
+
