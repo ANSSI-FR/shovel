@@ -156,9 +156,9 @@ class FlowDisplay {
       fractionalSecondDigits: 3
     }
     const dateStart = new Date(flow.flow.ts_start)
-    const formatedDateStart = new Intl.DateTimeFormat('en-US', dateParams).format(dateStart)
+    const formatedDateStart = new Intl.DateTimeFormat(undefined, dateParams).format(dateStart)
     const dateEnd = new Date(flow.flow.ts_end)
-    const formatedDateEnd = new Intl.DateTimeFormat('en-US', dateParams).format(dateEnd)
+    const formatedDateEnd = new Intl.DateTimeFormat(undefined, dateParams).format(dateEnd)
 
     // Change document title
     document.title = `${flow.flow.dest_ipport} - Shovel`

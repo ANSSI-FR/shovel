@@ -329,7 +329,7 @@ class FlowList {
     flows.forEach((flow) => {
       const date = new Date(flow.ts_start)
       const startDate = new Intl.DateTimeFormat(
-        'en-US',
+        undefined,
         { hour: 'numeric', minute: 'numeric', second: 'numeric', fractionalSecondDigits: 1 }
       ).format(date)
 
