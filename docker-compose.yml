@@ -8,18 +8,15 @@ services:
       - "./input_pcaps:/input_pcaps:ro"
       - "./suricata/rules:/suricata/rules:ro"
       - "./suricata/output:/suricata/output:rw"
-    environment:
-      # Include the name of the input pcap file in Suricata EVE logs (default: true)
-      PCAP_FILE: "true"
-      # Make Suricata wait for new pcap files (default: true)
-      # You need to disable this to see the last few flows, else Suricata will wait without logging them.
-      PCAP_FILE_CONTINUOUS: "true"
+    # Remove `--pcap-file-continuous` to see the last few flows, else Suricata
+    # will wait for new pcap before logging them.
+    command: -r /input_pcaps --pcap-file-continuous
 
   webapp:
     build: ./webapp
     image: anssi/shovel-webapp:dev
     volumes:
-      # You may remove the next line if `PCAP_FILE=false` in Suricata env
+      # You may remove the next line to prevent users from downloading pcaps.
       - "./input_pcaps:/input_pcaps:ro"
       # Write access is required in SQLite `mode=ro` as readers need to record
       # a mark in the WAL file. If you need to make the volume read-only, then

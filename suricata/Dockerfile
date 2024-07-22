@@ -10,4 +10,4 @@ FROM alpine:3.20
 RUN apk add --no-cache suricata lua5.1-sqlite
 COPY . /suricata
 COPY --from=builder /src/target/release/libeve_sqlite_output.so /suricata/
-CMD ["/suricata/entrypoint.sh"]
+ENTRYPOINT ["/suricata/entrypoint.sh"]

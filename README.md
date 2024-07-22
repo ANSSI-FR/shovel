@@ -80,8 +80,7 @@ This is fine, but it might add some delay before observing new flows.
 You may launch Suricata then the web application using the following:
 ```bash
 # Start Suricata
-export $(grep -vE "^(#.*|\s*)$" .env)
-./suricata/entrypoint.sh
+./suricata/entrypoint.sh -r input_pcaps --pcap-file-continuous
 ```
 
 ```bash

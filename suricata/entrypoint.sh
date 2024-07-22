@@ -4,13 +4,7 @@
 
 # Arguments override default Suricata configuration,
 # see https://github.com/OISF/suricata/blob/suricata-7.0.5/suricata.yaml.in
-
-SURICATA_PARAM="--runmode=single --no-random"
-if [ "${PCAP_FILE_CONTINUOUS:=true}" = true ]; then
-    SURICATA_PARAM="${SURICATA_PARAM} --pcap-file-continuous"
-fi
-echo "Starting Suricata with PCAP_FILE=${PCAP_FILE:=true} PCAP_FILE_CONTINUOUS=${PCAP_FILE_CONTINUOUS:=true}"
-suricata -r input_pcaps \
+suricata --runmode=single --no-random \
     -S suricata/rules/suricata.rules \
     -l suricata/output \
     --set plugins.0=suricata/libeve_sqlite_output.so \
@@ -37,4 +31,4 @@ suricata -r input_pcaps \
     --set app-layer.protocols.enip.enabled=yes \
     --set app-layer.protocols.sip.enabled=yes \
     --set stream.reassembly.depth=50mb \
-    ${SURICATA_PARAM}
+    "$@"
