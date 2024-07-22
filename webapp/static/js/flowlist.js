@@ -273,9 +273,13 @@ class FlowList {
     }
 
     // Add protocols
-    const option = document.createElement('option')
+    let option = document.createElement('option')
     option.value = ''
     option.textContent = 'All'
+    protocolSelect.appendChild(option)
+    option = document.createElement('option')
+    option.value = 'raw'
+    option.textContent = 'Raw'
     protocolSelect.appendChild(option)
     appProto.forEach((proto) => {
       const option = document.createElement('option')
