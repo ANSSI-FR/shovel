@@ -171,6 +171,14 @@ async def api_flow_get(request):
         rows = await cursor.fetchall()
         result["alert"] = [row_to_dict(f) for f in rows]
 
+    # Get associated anomalies
+    cursor = await eve_database.execute(
+        "SELECT extra_data FROM anomaly WHERE flow_id = ? ORDER BY id",
+        [flow_id],
+    )
+    rows = await cursor.fetchall()
+    result["anomaly"] = [row_to_dict(f) for f in rows]
+
     return JSONResponse(result, headers={"Cache-Control": "max-age=86400"})
 
 

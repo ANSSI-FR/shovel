@@ -199,7 +199,7 @@ class FlowDisplay {
       cardEl.classList.add('card', 'm-3', 'bg-body', 'font-monospace', 'border-warning')
       const cardHeader = document.createElement('div')
       cardHeader.classList.add('card-header')
-      cardHeader.textContent = `Anomaly! ${JSON.stringify(data)}`
+      cardHeader.textContent = `Dissection anomaly: ${JSON.stringify(data)}`
       cardEl.appendChild(cardHeader)
       alertsDiv.appendChild(cardEl)
     })
