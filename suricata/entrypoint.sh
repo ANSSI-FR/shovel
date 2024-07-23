@@ -4,7 +4,7 @@
 
 # Arguments override default Suricata configuration,
 # see https://github.com/OISF/suricata/blob/suricata-7.0.5/suricata.yaml.in
-suricata --runmode=single --no-random \
+suricata --runmode=single --no-random -k none \
     -S suricata/rules/suricata.rules \
     -l suricata/output \
     --set plugins.0=suricata/libeve_sqlite_output.so \
@@ -24,7 +24,6 @@ suricata --runmode=single --no-random \
     --set outputs.12.lua.enabled=yes \
     --set outputs.12.lua.scripts.0=suricata/suricata-tcp-payload-sqlite-output.lua \
     --set outputs.12.lua.scripts.1=suricata/suricata-udp-payload-sqlite-output.lua \
-    --set pcap-file.checksum-checks=no \
     --set app-layer.protocols.pgsql.enabled=yes \
     --set app-layer.protocols.modbus.enabled=yes \
     --set app-layer.protocols.dnp3.enabled=yes \
