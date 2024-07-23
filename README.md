@@ -79,8 +79,11 @@ This is fine, but it might add some delay before observing new flows.
 
 You may launch Suricata then the web application using the following:
 ```bash
-# Start Suricata
-./suricata/entrypoint.sh -r input_pcaps --pcap-file-continuous
+# Option A: capture device (fast, for live analysis)
+sudo ./suricata/entrypoint.sh -i tun5
+
+# Option B: pcap read mode (slower, for archives replay)
+./suricata/entrypoint.sh -r input_pcaps
 ```
 
 ```bash
