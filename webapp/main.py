@@ -321,7 +321,7 @@ async def lifespan(app):
 
 
 # Load configuration from environment variables, then .env file
-config = Config(".env")
+config = Config("../.env")
 DEBUG = config("DEBUG", cast=bool, default=False)
 EVE_DB_URI = config(
     "EVE_DB_URI", cast=str, default="file:../suricata/output/eve.db?mode=ro"

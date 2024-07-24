@@ -8,8 +8,8 @@ SPDX-License-Identifier: CC0-1.0
 Shovel is a web application that offers a graphical user interface to explore
 [Suricata EVE outputs](https://docs.suricata.io/en/suricata-7.0.1/output/eve/eve-json-output.html).
 Its primary focus is to help [Capture-the-Flag players](https://en.wikipedia.org/wiki/Capture_the_flag_(cybersecurity))
-analyse network traffic dumps during stressful and time-limited attack-defense games such as
-[FAUSTCTF](https://faustctf.net/) or [ECSC](https://ecsc.eu/).
+analyse network flows during stressful and time-limited attack-defense games such as
+[FAUSTCTF](https://faustctf.net/), [ENOWARS](https://enowars.com/) or [ECSC](https://ecsc.eu/).
 Shovel is developed in the context of
 [ECSC Team France](https://ctftime.org/team/159269/) training.
 
@@ -21,79 +21,104 @@ You might also want to have a look at these other awesome traffic analyser tools
   - https://github.com/eciavatta/caronte (first commit in 2020)
   - https://github.com/OpenAttackDefenseTools/tulip (fork from flower in May 2022)
 
-Compared to these traffic analyser tools, Shovel relies on Suricata while making
-some opinionated choices for the frontend. This has a few nice implications:
+Compared to these traffic analyser tools, Shovel only relies on Suricata while
+making opinionated choices for the frontend. This has a few nice implications:
 
-  - dissection of all application protocols already supported by Suricata (TCP and UDP),
+  - dissection of all application protocols supported by Suricata (HTTP2, modbus, SMB, DNS, etc),
   - flows payloads and dissections are stored inside SQLite databases for fast queries,
-  - filters based on libmagic, e.g. quickly filter flows containing PDF documents or PNG images,
+  - ingest can be a folder of pcaps for non-root CTF, or a live capture (less delay),
+  - tags are defined using Suricata rules (regex, libmagic match, HTTP header, etc),
   - no heavy build tools needed, Shovel is easy to tweak.
 
 Moreover, Shovel is batteries-included with some Suricata alert rules.
 
 ```
-      ┌────────────────────────┐
-      │ Suricata with:         │   eve.db    ┌───────────────┐
-pcap  │  - Eve SQLite plugin   ├────────────►│               │
-─────►│  - TCP payloads plugin │ payload.db  │ Python webapp │
-      │  - UDP payloads plugin ├────────────►│               │
-      └────────────────────────┘             └────▲──────────┘
-                                            .env  │
-                                            ──────┘
+        ┌────────────────────────┐
+device  │ Suricata with:         │   eve.db    ┌───────────────┐
+or pcap │  - Eve SQLite plugin   ├────────────►│               │
+───────►│  - TCP payloads plugin │ payload.db  │ Python webapp │
+        │  - UDP payloads plugin ├────────────►│               │
+        └────────────────────────┘             └────▲──────────┘
+                                              .env  │
+                                              ──────┘
 ```
 
-## Setup
+## Getting started
 
-### 0. Before the Capture-the-Flag event begins
+### Services mapping, ticks and flag format configuration
 
-Copy `example.env` to `.env` and update the configuration parameters.
-Also add the flag format in `suricata/rules/suricata.rules` if needed.
+Shovel is configured using environment variables.
+Copy `example.env` to `.env` and update the optional configuration parameters.
+You may update this file later and restart only the webapp.
 
-If you are playing a CTF using an IPv6 network, you might want to [enable IPv6 support in Docker deamon](https://docs.docker.com/config/daemon/ipv6/) before the CTF starts.
+Add the flag format in `suricata/rules/suricata.rules` if needed.
+If you modify this file after starting Suricata, you may reload rules using
+`pkill -USR2 suricata`.
 
-### 1. Network capture setup
+### Network capture
 
-You should place network captures in `input_pcaps/` folder.
-Capture files should be splitted into chunks to be progressively imported.
-If the CTF event does not already provide PCAP files, then you may adapt the
-following command for a GNU/Linux system (22 is SSH):
+Suricata supports [multiple capture methods](https://docs.suricata.io/en/suricata-7.0.6/support-status.html#id6).
+Please use a live capture with `AF_PACKET` when possible,
+or `libpcap` if you can't mirror the traffic (archives replay or rootless CTF).
+
+#### pcap capture mode (slower)
+
+Place pcap files in a folder such as `input_pcaps/`.
+
+If you are continuously adding new pcap, add `--pcap-file-continuous` to
+Suricata command line.
+
+Then you may start the compose using:
 ```bash
-ssh root@10.20.9.6 tcpdump -i game -n -w - 'tcp port not 22' | tcpdump -n -r - -G 30 -w input_pcaps/trace-%Y-%m-%d_%H-%M-%S.pcap
-```
-For a Microsoft Windows system, you may adapt the following command (3389 is RDP):
-```powershell
-.\tshark.exe -b duration:60 -w \\share\captures\trace -f "tcp port not 3389"
+docker compose up -d
 ```
 
-### 2. Launch Suricata and webapp via Docker (option A)
-
-Start Suricata and the web application using `docker compose up -d --build`.
-
-By default, all services are only accessible from `localhost`.
-You should edit `docker-compose.yml` if you want to expose some services to your local network.
-
-Please note that restarting Suricata will cause all network capture files to be loaded again.
-This is fine, but it might add some delay before observing new flows.
-
-### 2. Launch Suricata and webapp traditionally (option B)
-
-You may launch Suricata then the web application using the following:
+If you don't want to use Docker, you may manually launch Suricata then the web
+application using the two following commands:
 ```bash
-# Option A: capture device (fast, for live analysis)
-sudo ./suricata/entrypoint.sh -i tun5
-
-# Option B: pcap read mode (slower, for archives replay)
 ./suricata/entrypoint.sh -r input_pcaps
-```
-
-```bash
-# Start web app
-export $(grep -vE "^(#.*|\s*)$" .env)
 (cd webapp && uvicorn --host 127.0.0.1 main:app)
 ```
 
-Please note that restarting Suricata will cause all network capture files to be loaded again.
-This is fine, but it might add some delay before observing new flows.
+> [!TIP]
+> If the CTF event does not already provide PCAP files, then you may adapt the
+> following command for a GNU/Linux system (22 is SSH):
+> ```bash
+> ssh root@10.20.9.6 tcpdump -i game -n -w - 'tcp port not 22' | tcpdump -n -r - -G 30 -w input_pcaps/trace-%Y-%m-%d_%H-%M-%S.pcap
+> ```
+> For a Microsoft Windows system, you may adapt the following command (3389 is RDP):
+> ```powershell
+> .\tshark.exe -b duration:60 -w \\share\captures\trace -f "tcp port not 3389"
+> ```
+
+> [!WARNING]
+> Please note that restarting Suricata will cause all network capture files to
+> be loaded again. It might add some delay before observing new flows.
+
+#### Live capture mode (faster)
+
+This mode requires access to a network device with the game traffic.
+Here this device is named `tun5`.
+
+Edit `docker-compose.yml` and comment option A and uncomment option B under
+`suricata` container definitions.
+Then, you may start the compose using:
+```bash
+docker compose up -d
+```
+
+If you don't want to use Docker, you may manually launch Suricata then the web
+application using the two following commands:
+```bash
+sudo ./suricata/entrypoint.sh -i tun5
+(cd webapp && uvicorn --host 127.0.0.1 main:app)
+```
+
+> [!WARNING]
+> Please note that stopping Suricata will stop network capture.
+
+You may run `sudo tcpdump -n -i tun5 -G 30 -w trace-%Y-%m-%d_%H-%M-%S.pcap` for
+archiving purposes.
 
 ## Frequently Asked Questions
 
@@ -108,5 +133,5 @@ as source and destination ports and addresses). See source code:
 You can edit suricata rules in `suricata/rules/suricata.rules`, then reload the rules
 using:
 ```bash
-kill -USR2 $(pidof suricata)
+pkill -USR2 suricata
 ```

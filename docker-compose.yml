@@ -9,16 +9,16 @@ services:
       - "./suricata/rules:/suricata/rules:ro"
       - "./suricata/output:/suricata/output:rw"
 
-    # Option A: capture device (fast, for live analysis)
-    # Drastically reduces ingest delay, but requires access to an interface.
-    command: -i tun5
-    cap_add:
-      - NET_ADMIN
-    network_mode: "host"
-
-    # Option B: pcap read mode (slower, for archives replay)
+    # Option A: pcap read mode (slower, for archives replay or rootless CTF)
     # Add `--pcap-file-continuous` to watch for new pcap in folder.
-    #command: -r /input_pcaps --pcap-file-continuous
+    command: -r /input_pcaps
+
+    # Option B: capture device (fast, for live analysis)
+    # Drastically reduces ingest delay, but requires access to an interface.
+    #command: -i tun5
+    #cap_add:
+    #  - NET_ADMIN
+    #network_mode: "host"
 
   webapp:
     build: ./webapp
