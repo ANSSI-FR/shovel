@@ -21,6 +21,7 @@ suricata --runmode=single --no-random -k none \
     --set outputs.7.stats.enabled=no \
     --set outputs.9.file-store.enabled=yes \
     --set outputs.9.file-store.force-filestore=yes \
+    --set outputs.9.file-store.stream-depth=0 \
     --set outputs.12.lua.enabled=yes \
     --set outputs.12.lua.scripts.0=suricata/suricata-tcp-payload-sqlite-output.lua \
     --set outputs.12.lua.scripts.1=suricata/suricata-udp-payload-sqlite-output.lua \
@@ -29,5 +30,7 @@ suricata --runmode=single --no-random -k none \
     --set app-layer.protocols.dnp3.enabled=yes \
     --set app-layer.protocols.enip.enabled=yes \
     --set app-layer.protocols.sip.enabled=yes \
+    --set app-layer.protocols.http.libhtp.default-config.request-body-limit=50mb \
+    --set app-layer.protocols.http.libhtp.default-config.response-body-limit=0 \
     --set stream.reassembly.depth=50mb \
     "$@"
