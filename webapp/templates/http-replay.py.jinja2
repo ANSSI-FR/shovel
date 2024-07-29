@@ -17,7 +17,7 @@
 #!/usr/bin/env python3
 # Filename: replay-{{ ns.service_name }}-{{ data[0].flow_id }}.py
 import json
-import os
+import logging
 import sys
 import requests
 
@@ -26,6 +26,10 @@ This file was generated from network capture towards {{ data[0].hostname }}.
 Corresponding flow id: {{ data[0].flow_id }}
 Service: {{ ns.service_name }}
 """
+
+# Setup logger to log requests
+logging.basicConfig(format='[%(levelname)s] %(message)s')
+logging.getLogger("urllib3.connectionpool").setLevel(logging.DEBUG)
 
 # Load arguments
 # EXTRA is an array of the flagids for current service and team
@@ -46,7 +50,6 @@ s = requests.Session()
 s.headers["User-Agent"] = "{{ ns.user_agent }}"
 
 {% for req in data -%}
-print(f"[+] {{ req.http_method }} http://{HOST}:{{ req.http_port or "80" }}{{ req.url }}", file=sys.stderr)
 r = s.{{ req.http_method | lower }}(
     f"http://{HOST}:{{ req.http_port or "80" }}{{ req.url }}",
     {%- if req.http_method == "POST" %}
@@ -62,7 +65,7 @@ r = s.{{ req.http_method | lower }}(
     timeout=2,  # prevent stall
 )
 if r.status_code != {{ req.status }}:
-    print(f"[!] Request returned wrong status code {r.status_code}, expected {{ req.status }}")
+    logging.error(f"Request returned wrong status code {r.status_code}, expected {{ req.status }}")
 print(r.text, flush=True)
 
 {% endfor -%}
