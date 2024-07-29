@@ -33,4 +33,8 @@ suricata --runmode=single --no-random -k none \
     --set app-layer.protocols.http.libhtp.default-config.request-body-limit=50mb \
     --set app-layer.protocols.http.libhtp.default-config.response-body-limit=0 \
     --set stream.reassembly.depth=50mb \
+    --set flow-timeouts.tcp.established=60 \
+    --set flow-timeouts.tcp.emergency-established=60 \
+    --set flow-timeouts.tcp.closed=5 \
+    --set flow-timeouts.tcp.emergency-closed=5 \
     "$@"
