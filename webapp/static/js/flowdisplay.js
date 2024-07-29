@@ -135,8 +135,9 @@ class FlowDisplay {
     const url = new URL(document.location)
     const flowId = url.searchParams.get('flow')
     document.getElementById('display-welcome').classList.toggle('d-none', flowId !== null)
-    document.getElementById('display-flow').classList.add('d-none')
-    document.getElementById('display-alerts').classList.add('d-none')
+    document.getElementById('display-flow').classList.toggle('d-none', flowId === null)
+    document.getElementById('display-alerts').classList.toggle('d-none', flowId === null)
+    document.getElementById('display-down').classList.add('d-none')
     document.getElementById('display-app').classList.add('d-none')
     document.getElementById('display-raw').classList.add('d-none')
     if (flowId === null) {
@@ -164,7 +165,6 @@ class FlowDisplay {
     document.title = `${flow.flow.dest_ipport} - Shovel`
 
     // Flow card
-    document.getElementById('display-flow').classList.remove('d-none')
     document.querySelector('#display-flow > header > h1').textContent = `${flow.flow.proto} flow, ${flow.flow.src_ipport} ➔ ${flow.flow.dest_ipport}`
     document.querySelector('#display-flow > header > a').href = flow.flow.pcap_filename
     document.querySelector('#display-flow > header > a').classList.toggle('d-none', !flow.flow.pcap_filename)
@@ -182,7 +182,6 @@ class FlowDisplay {
     while (alertsDiv.lastChild) {
       alertsDiv.removeChild(alertsDiv.lastChild)
     }
-    alertsDiv.classList.remove('d-none')
     flow.alert?.forEach(data => {
       if (data.signature !== 'tag') {
         const cardEl = document.createElement('div')
@@ -206,6 +205,7 @@ class FlowDisplay {
 
     // Application protocol card
     const appProto = flow.flow.app_proto
+    document.getElementById('display-down').classList.toggle('d-none', appProto)
     if (appProto && appProto !== 'failed' && flow[appProto] !== undefined) {
       document.getElementById('display-app').classList.remove('d-none')
       document.querySelector('#display-app > header > a').classList.toggle('d-none', appProto !== 'http')
@@ -310,8 +310,8 @@ class FlowDisplay {
       })
     }
 
-    // Raw data card
-    if (['TCP', 'UDP'].includes(flow.flow.proto)) {
+    // Show raw data card if a TCP or UDP connection was established
+    if (['TCP', 'UDP'].includes(flow.flow.proto) && appProto) {
       document.getElementById('display-raw').classList.remove('d-none')
       document.getElementById('display-raw-replay').href = `api/replay-raw/${flowId}`
 

@@ -384,9 +384,9 @@ class FlowList {
       flowInfoDiv.appendChild(flowInfoDiv2)
       flowEl.appendChild(flowInfoDiv)
 
-      // Use application protocol (or 'raw') as first badge
-      const appProto = flow.app_proto !== 'failed' ? flow.app_proto : null
-      const badge = this.tagBadge((appProto ?? 'raw').toUpperCase())
+      // Use application protocol as first badge, or 'DOWN' if connection failed
+      const appProto = flow.app_proto?.replace('failed', 'raw')
+      const badge = appProto ? this.tagBadge(appProto.toUpperCase()) : this.tagBadge('DOWN', 'danger')
       flowEl.appendChild(badge)
 
       const flowTags = flow.tags?.split(',')

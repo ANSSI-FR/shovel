@@ -40,7 +40,7 @@ async def api_flow_list(request):
     # Parse GET arguments
     ts_to = request.query_params.get("to", str(int(1e10)))
     services = request.query_params.getlist("service")
-    app_proto = request.query_params.get("app_proto", "all")
+    app_proto = request.query_params.get("app_proto")
     search = request.query_params.get("search")
     tags_require = request.query_params.getlist("tag_require")
     tags_deny = request.query_params.getlist("tag_deny")
@@ -55,7 +55,7 @@ async def api_flow_list(request):
           fsearchfid AS (SELECT value FROM json_each(?6))
         SELECT id, ts_start, ts_end, dest_ipport, app_proto,
           (SELECT GROUP_CONCAT(tag) FROM alert WHERE flow_id = flow.id) AS tags
-        FROM flow WHERE ts_start <= ?4 AND (?5 = 'all' OR ?5 IS app_proto)
+        FROM flow WHERE ts_start <= ?4 AND (?5 = app_proto OR ?5 IS NULL)
     """
     if services == ["!"]:
         # Filter flows related to no services
@@ -97,7 +97,7 @@ async def api_flow_list(request):
             json.dumps(tags_require),
             json.dumps(tags_deny),
             int(ts_to) * 1000,
-            None if app_proto == "raw" else app_proto,
+            "failed" if app_proto == "raw" else app_proto,
             json.dumps(search_fid),
         ),
     )
