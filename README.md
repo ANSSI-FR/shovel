@@ -73,7 +73,7 @@ Then you may start the compose using:
 docker compose up -d
 ```
 
-If you don't want to use Docker, you may manually launch Suricata then the web
+If you don't want to use Docker, you may manually launch Suricata and the web
 application using the two following commands:
 ```bash
 ./suricata/entrypoint.sh -r input_pcaps
@@ -107,7 +107,7 @@ Then, you may start the compose using:
 docker compose up -d
 ```
 
-If you don't want to use Docker, you may manually launch Suricata then the web
+If you don't want to use Docker, you may manually launch Suricata and the web
 application using the two following commands:
 ```bash
 sudo ./suricata/entrypoint.sh -i tun5
