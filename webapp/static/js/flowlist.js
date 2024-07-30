@@ -65,16 +65,19 @@ class FlowList {
       }
     })
 
-    // On load more button click, update URL then update flows list
-    document.getElementById('flow-list-show-older').addEventListener('click', async e => {
-      const lastFlowTs = document.getElementById('flow-list').lastElementChild?.dataset.ts_start
-      const url = new URL(document.location)
-      url.searchParams.set('to', Math.floor(lastFlowTs))
-      window.history.pushState(null, '', url.href)
-      await this.update()
-      document.getElementById('flow-list').firstElementChild?.scrollIntoView()
-      e.preventDefault()
+    // Infinite scroll: load more flows when loading indicator is seen
+    const observer = new window.IntersectionObserver((entries) => {
+      entries.forEach(async e => {
+        if (e.isIntersecting) {
+          const lastFlowTs = document.getElementById('flow-list').lastElementChild?.dataset.ts_start
+          if (lastFlowTs) {
+            // User sees loading indicator and flows list is not empty
+            await this.update(Math.floor(lastFlowTs))
+          }
+        }
+      })
     })
+    observer.observe(document.getElementById('flow-list-loading-indicator'))
 
     // On browser history pop, dispatch 'locationchange' event, then update flows list
     window.addEventListener('popstate', e => {
@@ -331,19 +334,10 @@ class FlowList {
   }
 
   /**
-   * Empty and refill flows list
+   * Fill flows list
    */
-  async updateFlowsList (flows, tags) {
-    // Empty list
+  async fillFlowsList (flows, tags) {
     const flowList = document.getElementById('flow-list')
-    while (flowList.lastChild) {
-      flowList.removeChild(flowList.lastChild)
-    }
-
-    // Fill list
-    document.getElementById('flow-list').classList.remove('d-none')
-    document.getElementById('flow-list-loading-indicator').classList.add('d-none')
-    let lastTick = -1
     flows.forEach((flow) => {
       const date = new Date(flow.ts_start)
       const startDate = new Intl.DateTimeFormat(
@@ -354,12 +348,12 @@ class FlowList {
       // Create tick element on new tick
       if (this.tickLength > 0) {
         const tick = Math.floor((flow.ts_start / 1000 - this.startTs) / this.tickLength)
-        if (tick !== lastTick) {
+        if (tick !== this.lastTick) {
           const tickEl = document.createElement('span')
           tickEl.classList.add('list-group-item', 'sticky-top', 'pt-3', 'pb-1', 'px-2', 'border-0', 'border-bottom', 'bg-light-subtle', 'text-center', 'fw-semibold')
           tickEl.textContent = `Tick ${tick}`
           flowList.appendChild(tickEl)
-          lastTick = tick
+          this.lastTick = tick
         }
       }
 
@@ -401,8 +395,8 @@ class FlowList {
       flowList.appendChild(flowEl)
     })
 
-    // Display a button if we are only displaying 100 flows
-    document.getElementById('flow-list-show-older').classList.toggle('d-none', flows.length !== 100)
+    // Hide loading indicator if we are displaying less than 100 new flows
+    document.getElementById('flow-list-loading-indicator').classList.toggle('d-none', flows.length !== 100)
   }
 
   /**
@@ -415,20 +409,41 @@ class FlowList {
     linkElement?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
   }
 
-  async update () {
-    // Show loading indicator while waiting for API
-    document.getElementById('flow-list-loading-indicator').classList.remove('d-none')
-    document.getElementById('flow-list').classList.add('d-none')
-    document.getElementById('flow-list-show-older').classList.add('d-none')
-
+  /**
+   * Update flowlist
+   * If `fillTo` is given, then only append newly fetch flows
+   */
+  async update (fillTo) {
     const url = new URL(document.location)
     const fromTs = url.searchParams.get('from')
-    const toTs = url.searchParams.get('to')
+    const toTs = fillTo ?? url.searchParams.get('to')
     const services = url.searchParams.getAll('service')
     const filterAppProto = url.searchParams.get('app_proto')
     const filterSearch = url.searchParams.get('search')
     const filterTagsRequire = url.searchParams.getAll('tag_require')
     const filterTagsDeny = url.searchParams.getAll('tag_deny')
+
+    if (!fillTo) {
+      // Update search input
+      const searchInput = document.getElementById('filter-search')
+      searchInput.value = filterSearch ?? ''
+      searchInput.classList.toggle('is-active', filterSearch !== null)
+
+      // Update filter dropdown visual indicator
+      document.querySelector('#dropdown-filter > button').classList.toggle('text-bg-purple', toTs || filterTagsRequire.length || filterTagsDeny.length || filterAppProto || filterSearch)
+
+      // Update service filter select state
+      document.getElementById('services-select').value = services.join(',')
+
+      // Update time filter state
+      if (toTs) {
+        const toTick = (Number(toTs) - this.startTs) / (this.tickLength || 1) - 1
+        document.getElementById('filter-time-until').value = toTick
+      }
+      document.getElementById('filter-time-until').classList.toggle('is-active', toTs)
+    }
+
+    // Fetch API and update
     const { flows, appProto, tags } = await this.apiClient.listFlows(
       fromTs ? Number(fromTs) : null,
       toTs ? Number(toTs) : null,
@@ -438,29 +453,21 @@ class FlowList {
       filterTagsRequire,
       filterTagsDeny
     )
-
-    // Update search input
-    const searchInput = document.getElementById('filter-search')
-    searchInput.value = filterSearch ?? ''
-    searchInput.classList.toggle('is-active', filterSearch !== null)
-
     await this.updateProtocolFilter(appProto)
     this.updateTagFilter(tags, filterTagsRequire, filterTagsDeny)
-    await this.updateFlowsList(flows, tags)
-    this.updateActiveFlow()
-
-    // Update filter dropdown visual indicator
-    document.querySelector('#dropdown-filter > button').classList.toggle('text-bg-purple', toTs || filterTagsRequire.length || filterTagsDeny.length || filterAppProto || filterSearch)
-
-    // Update service filter select state
-    document.getElementById('services-select').value = services.join(',')
-
-    // Update time filter state
-    if (toTs) {
-      const toTick = (Number(toTs) - this.startTs) / (this.tickLength || 1) - 1
-      document.getElementById('filter-time-until').value = toTick
+    if (!fillTo) {
+      // Empty flow list, then fill and show selected
+      const flowList = document.getElementById('flow-list')
+      while (flowList.lastChild) {
+        flowList.removeChild(flowList.lastChild)
+      }
+      this.lastTick = -1
+      await this.fillFlowsList(flows, tags)
+      this.updateActiveFlow()
+    } else {
+      // Only fill flow list
+      await this.fillFlowsList(flows, tags)
     }
-    document.getElementById('filter-time-until').classList.toggle('is-active', toTs)
   }
 }
 
