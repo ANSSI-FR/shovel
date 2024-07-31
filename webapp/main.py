@@ -38,7 +38,7 @@ async def index(request):
 
 async def api_flow_list(request):
     # Parse GET arguments
-    ts_to = request.query_params.get("to", str(int(1e10)))
+    ts_to = request.query_params.get("to", str(int(1e13)))
     services = request.query_params.getlist("service")
     app_proto = request.query_params.get("app_proto")
     search = request.query_params.get("search")
@@ -96,7 +96,7 @@ async def api_flow_list(request):
             json.dumps(services),
             json.dumps(tags_require),
             json.dumps(tags_deny),
-            int(ts_to) * 1000,
+            int(ts_to),
             "failed" if app_proto == "raw" else app_proto,
             json.dumps(search_fid),
         ),

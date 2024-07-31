@@ -165,17 +165,17 @@ class FlowDisplay {
     document.title = `${flow.flow.dest_ipport} - Shovel`
 
     // Flow card
-    document.querySelector('#display-flow > header > h1').textContent = `${flow.flow.proto} flow, ${flow.flow.src_ipport} ➔ ${flow.flow.dest_ipport}`
-    document.querySelector('#display-flow > header > a').href = flow.flow.pcap_filename
-    document.querySelector('#display-flow > header > a').classList.toggle('d-none', !flow.flow.pcap_filename)
-    const flowBody = document.querySelector('#display-flow > pre')
-    flowBody.title = `${flow.flow.ts_start} - ${flow.flow.ts_end}`
-    flowBody.textContent = `From ${formatedDateStart} to ${formatedDateEnd}`
+    document.getElementById('display-flow-time').textContent = `From ${formatedDateStart}\n  to ${formatedDateEnd}`
+    document.getElementById('display-flow-time').title = `${flow.flow.ts_start} - ${flow.flow.ts_end}`
+    document.getElementById('display-flow-pkt').textContent = `${flow.flow.proto} flow from ${flow.flow.src_ipport} to ${flow.flow.dest_ipport}\n──► ${flow.flow.pkts_toserver} packets (${flow.flow.bytes_toserver} bytes)\n◀── ${flow.flow.pkts_toclient} packets (${flow.flow.bytes_toclient} bytes)`
+    document.getElementById('display-flow-pcap').href = flow.flow.pcap_filename
+    document.getElementById('display-flow-pcap').parentNode.classList.toggle('d-none', !flow.flow.pcap_filename)
     if (this.tickLength > 0) {
-      const tick = Math.floor((flow.flow.ts_start / 1000 - this.startTs) / this.tickLength)
-      flowBody.textContent += `, tick ${tick}`
+      document.getElementById('display-flow-tick').classList.remove('d-none')
+      const tick = ((flow.flow.ts_start / 1000 - this.startTs) / this.tickLength).toFixed(3)
+      document.querySelector('#display-flow-tick > a > span').textContent = tick
+      document.querySelector('#display-flow-tick > a').dataset.ts = flow.flow.ts_start
     }
-    flowBody.textContent += `\nClient sent ${flow.flow.pkts_toserver} packets (${flow.flow.bytes_toserver} bytes), server replied with ${flow.flow.pkts_toclient} packets (${flow.flow.bytes_toclient} bytes).`
 
     // Alert and anomaly cards
     const alertsDiv = document.getElementById('display-alerts')
