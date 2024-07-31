@@ -456,6 +456,13 @@ class FlowList {
         document.getElementById('filter-time-until').value = toTick
       }
       document.getElementById('filter-time-until').classList.toggle('is-active', toTs)
+
+      // Empty flow list
+      const flowList = document.getElementById('flow-list')
+      while (flowList.lastChild) {
+        flowList.removeChild(flowList.lastChild)
+      }
+      this.lastTick = -1
     }
 
     // Fetch API and update
@@ -470,14 +477,7 @@ class FlowList {
     )
     await this.updateProtocolFilter(appProto)
     this.updateTagFilter(tags, filterTagsRequire, filterTagsDeny)
-    if (!fillTo) {
-      // Empty flow list
-      const flowList = document.getElementById('flow-list')
-      while (flowList.lastChild) {
-        flowList.removeChild(flowList.lastChild)
-      }
-      this.lastTick = -1
-    } else {
+    if (fillTo) {
       // Pop the first element as it is already present
       flows.shift()
     }
