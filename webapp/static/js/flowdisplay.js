@@ -266,14 +266,15 @@ class FlowDisplay {
             mainEl = document.createElement('div')
             const utf8View = document.createElement('code')
             const hexView = document.createElement('code')
-            fetch(fileHref, {}).then((d) => d.arrayBuffer()).then((d) => {
-              const byteArray = new Uint8Array(d)
-              const utf8Decoder = new TextDecoder()
-              utf8View.innerHTML = this.highlightPayload(utf8Decoder.decode(byteArray), flow.flow.flowvars?.map(d => d.match))
-              hexView.textContent = this.renderHexDump(byteArray)
-              hexView.classList.add('d-none')
-              mainEl.appendChild(utf8View)
-              mainEl.appendChild(hexView)
+            utf8View.innerText = ' '
+            hexView.classList.add('d-none')
+            mainEl.appendChild(utf8View)
+            mainEl.appendChild(hexView)
+            fetch(fileHref).then(r => r.blob()).then(d => {
+              d.text().then(t => {
+                utf8View.innerHTML = this.highlightPayload(t, flow.flow.flowvars?.map(d => d.match))
+              })
+              d.bytes().then(b => { hexView.textContent = this.renderHexDump(b) })
             })
 
             // Add utf-8/hex switch button
