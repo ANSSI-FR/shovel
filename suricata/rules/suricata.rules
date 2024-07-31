@@ -161,7 +161,6 @@ rejectboth ip any any -> any any (msg: "Found SQL '::bytea'"; flow:to_server; co
 rejectboth ip any any -> any any (msg: "Found SQL 'CAST(. as bytea)'"; flow:to_server; content: "CAST("; content: " as bytea)"; nocase; metadata: tag SQL CAST, color warning; sid: 4358;)
 rejectboth ip any any -> any any (msg: "Found SQL 'COALESCE('"; flow:to_server; content: "COALESCE("; nocase; metadata: tag SQL COAL, color warning; sid: 4359;)
 rejectboth ip any any -> any any (msg: "Found SQL 'VARCHAR('"; flow:to_server; content: "VARCHAR("; nocase; metadata: tag SQL VARC, color warning; sid: 4360;)
-rejectboth ip any any -> any any (msg: "Found Unicode escape '\\u00..'"; flow:to_server; content: "|5C|u00"; pcre: "/[0-9a-fA-F]{2}/"; distance: 0; metadata: tag UNICODE, color warning; sid: 4401;)
 rejectboth ip any any -> any any (msg: "Found XML '<!ENTITY'"; flow:to_server; content: "|3c 21|ENTITY"; nocase; metadata: tag XML ENTITY, color warning; sid: 4501;)
 rejectboth ip any any -> any any (msg: "Found XML '<!ENTITY' (URL encoded)"; flow:to_server; content: "|25|3C|25|21ENTITY"; nocase; metadata: tag XML ENTITY, color warning; sid: 4502;)
 rejectboth ip any any -> any any (msg: "Found XML '<!ENTITY' (base64)"; flow:to_server; content: "PCFFTlRJVF"; nocase; metadata: tag XML ENTITY, color warning; sid: 4503;)
@@ -178,3 +177,4 @@ alert ip any any -> any any (msg: "Found path '/proc/' (URL encoded)"; flow:to_s
 alert ip any any -> any any (msg: "Found path '/tmp/'"; flow:to_server; content: "/tmp/"; metadata: tag TMP PATH, color warning; sid: 5107;)
 alert ip any any -> any any (msg: "Found path '/tmp/' (URL encoded)"; flow:to_server; content: "%2Ftmp%2F"; metadata: tag TMP PATH, color warning; sid: 5108;)
 alert ip any any -> any any (msg: "Found path traversal '../../'"; flow:to_server; content: "../../"; metadata: tag PATH TRAVERSAL, color warning; sid: 5109;)
+alert ip any any -> any any (msg: "Found Unicode escape '\\u00..'"; flow:to_server; content: "|5C|u00"; pcre: "/[0-9a-fA-F]{2}/"; distance: 0; metadata: tag UNICODE, color warning; sid: 5201;)
