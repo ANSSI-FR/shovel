@@ -404,7 +404,7 @@ class FlowList {
     })
 
     // Hide loading indicator if we are displaying less than 100 new flows
-    document.getElementById('flow-list-loading-indicator').classList.toggle('d-none', flows.length !== 100)
+    document.getElementById('flow-list-loading-indicator').classList.toggle('d-none', flows.length < 99)
 
     // Refresh observer
     // This trigger the observer again if the loading indicator is still intersecting with the viewport
@@ -477,6 +477,9 @@ class FlowList {
         flowList.removeChild(flowList.lastChild)
       }
       this.lastTick = -1
+    } else {
+      // Pop the first element as it is already present
+      flows.shift()
     }
     await this.fillFlowsList(flows, tags)
     this.updateActiveFlow(!fillTo)
