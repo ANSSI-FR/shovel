@@ -35,6 +35,14 @@ alert ip any any -> any any (msg: "A ICC flag was sent to client"; flow:to_clien
 alert ip any any -> any any (msg: "A ICC flag was sent to client (base64)"; flow:to_client; content: "SUNDX"; metadata: tag FLAG OUT B64, color danger; sid: 43;)
 alert ip any any -> any any (msg: "A ICC flag was sent to client (base64)"; flow:to_client; file.data; content: "SUNDX"; metadata: tag FLAG OUT B64, color danger; sid: 44;)
 alert ip any any -> any any (msg: "A ICC flag was placed in our services (probably by checkers)"; flow:to_server; content: "ICC_"; pcre: "/(ICC_[A-Za-z0-9\/+]{32})/, flow:match"; distance: -4; metadata: tag FLAG IN, color success; sid: 45;)
+alert ip any any -> any any (msg: "A saarCTF flag was sent to client"; flow:to_client; content: "SAAR"; pcre: "/(SAAR\{[A-Za-z0-9-_]{32}\})/, flow:match"; distance: -4; metadata: tag FLAG OUT, color danger; sid: 51;)
+alert ip any any -> any any (msg: "A saarCTF flag was sent to client"; flow:to_client; file.data; content: "SAAR{"; pcre: "/(SAAR\{[A-Za-z0-9-_]{32}\})/, flow:match"; distance: -5; metadata: tag FLAG OUT, color danger; sid: 52;)
+alert ip any any -> any any (msg: "A saarCTF flag was sent to client (URL encoded)"; flow:to_client; content: "SAAR%7B"; pcre: "/(SAAR%7B[A-Za-z0-9-_]{32}%7D)/, flow:match"; distance: -7; metadata: tag FLAG OUT, color danger; sid: 53;)
+alert ip any any -> any any (msg: "A saarCTF flag was sent to client (base64)"; flow:to_client; content: "U0FBUn"; metadata: tag FLAG OUT B64, color danger; sid: 54;)
+alert ip any any -> any any (msg: "A saarCTF flag was sent to client (base64)"; flow:to_client; content: "NBQVJ7"; metadata: tag FLAG OUT B64, color danger; sid: 55;)
+alert ip any any -> any any (msg: "A saarCTF flag was sent to client (base64)"; flow:to_client; content: "TQUFSe"; metadata: tag FLAG OUT B64, color danger; sid: 56;)
+alert ip any any -> any any (msg: "A saarCTF flag was placed in our services (probably by checkers)"; flow:to_server; content: "SAAR"; pcre: "/(SAAR\{[A-Za-z0-9-_]{32}\})/, flow:match"; distance: -4; metadata: tag FLAG IN, color success; sid: 57;)
+alert ip any any -> any any (msg: "A saarCTF flag was placed in our services (probably by checkers, URL encoded)"; flow:to_server; content: "SAAR%7B"; pcre: "/(SAAR%7B[A-Za-z0-9-_]{32}%7D)/, flow:match"; distance: -7; metadata: tag FLAG IN, color success; sid: 58;)
 
 # Tag file formats using libmagic (sid 1001-2000)
 # As libmagic calls are slow, please use a content filter before.
