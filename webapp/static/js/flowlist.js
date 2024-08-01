@@ -226,6 +226,7 @@ class FlowList {
     const appData = document.getElementById('app').dataset
     this.startTs = Math.floor(Date.parse(appData.startDate) / 1000)
     this.tickLength = Number(appData.tickLength)
+    this.tags = []
     this.update()
   }
 
@@ -457,12 +458,19 @@ class FlowList {
       }
       document.getElementById('filter-time-until').classList.toggle('is-active', toTs)
 
+      // Update tags filter before API response
+      this.updateTagFilter(this.tags, filterTagsRequire, filterTagsDeny)
+
       // Empty flow list
       const flowList = document.getElementById('flow-list')
       while (flowList.lastChild) {
         flowList.removeChild(flowList.lastChild)
       }
       this.lastTick = -1
+
+      // Show loading indicator
+      // As the list is empty, the infinite scroll callback won't be triggered
+      document.getElementById('flow-list-loading-indicator').classList.remove('d-none')
     }
 
     // Fetch API and update
@@ -475,6 +483,7 @@ class FlowList {
       filterTagsRequire,
       filterTagsDeny
     )
+    this.tags = tags
     await this.updateProtocolFilter(appProto)
     this.updateTagFilter(tags, filterTagsRequire, filterTagsDeny)
     if (fillTo) {
