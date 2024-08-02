@@ -354,6 +354,12 @@ class FlowList {
         { hour: 'numeric', minute: 'numeric', second: 'numeric', fractionalSecondDigits: 1 }
       ).format(date)
 
+      // Don't insert flow already in list
+      // This happens when adding flows during infinite scroll
+      if (flowList.querySelector(`a[data-flow="${flow.id}"]`)) {
+        return
+      }
+
       // Create tick element on new tick
       if (this.tickLength > 0) {
         const tick = Math.floor((flow.ts_start / 1000 - this.startTs) / this.tickLength)
@@ -486,10 +492,6 @@ class FlowList {
     this.tags = tags
     await this.updateProtocolFilter(appProto)
     this.updateTagFilter(tags, filterTagsRequire, filterTagsDeny)
-    if (fillTo) {
-      // Pop the first element as it is already present
-      flows.shift()
-    }
     await this.fillFlowsList(flows, tags)
     this.updateActiveFlow(!fillTo)
   }
