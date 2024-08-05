@@ -7,100 +7,80 @@ mod ffi;
 
 mod database;
 
-use rusqlite::Connection;
 use std::fmt::Debug;
 use std::os::raw::{c_char, c_int, c_void};
-use std::sync::Mutex;
-use suricata::conf::ConfNode;
-use suricata::{SCLogError, SCLogNotice};
+use std::sync::mpsc;
 
 // Default configuration values.
-const DEFAULT_DATABASE_URI: &str = "file:eve.db";
+const DEFAULT_DATABASE_URI: &str = "file:suricata/output/eve.db";
+const DEFAULT_BUFFER_SIZE: &str = "1000";
 
 #[derive(Debug, Clone)]
 struct Config {
     filename: String,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            filename: DEFAULT_DATABASE_URI.into(),
-        }
-    }
+    buffer: usize,
 }
 
 impl Config {
-    fn new(conf: &ConfNode) -> Self {
-        let filename = conf
-            .get_child_value("filename")
-            .unwrap_or(DEFAULT_DATABASE_URI);
+    fn new() -> Self {
         Self {
-            filename: filename.into(),
+            filename: std::env::var("EVE_FILENAME").unwrap_or(DEFAULT_DATABASE_URI.into()),
+            buffer: std::env::var("EVE_BUFFER")
+                .unwrap_or(DEFAULT_BUFFER_SIZE.into())
+                .parse()
+                .expect("EVE_BUFFER is not an integer"),
         }
     }
 }
 
 struct Context {
-    conn: Mutex<Connection>,
+    tx: mpsc::SyncSender<String>,
     count: usize,
-    dropped: usize,
 }
 
-unsafe extern "C" fn output_init(
-    conf: *const c_void,
-    threaded: bool,
-    init_data: *mut *mut c_void,
-) -> c_int {
-    if threaded {
-        SCLogError!("SQLite output plugin does not support threaded EVE yet");
-        panic!()
-    }
+fn output_init_rs(threaded: bool) -> Context {
+    assert!(
+        !threaded,
+        "SQLite output plugin does not support threaded EVE yet"
+    );
 
     // Load configuration
-    let config = if conf.is_null() {
-        Config::default()
-    } else {
-        Config::new(&ConfNode::wrap(conf))
-    };
+    let config = Config::new();
 
-    // Open SQLite database and apply schema
-    let conn = match Connection::open(config.filename) {
-        Ok(c) => c,
+    let (tx, rx) = mpsc::sync_channel(config.buffer);
+    let mut database_client = match database::Database::new(config.filename, rx) {
+        Ok(client) => client,
         Err(err) => {
-            SCLogError!("Failed to initialize SQLite connection: {err:?}");
+            log::error!("Failed to initialize Database client: {:?}", err);
             panic!()
         }
     };
+    std::thread::spawn(move || database_client.run());
+    Context { tx, count: 0 }
+}
 
-    // WAL journal mode allows multiple concurrent readers
-    conn.pragma_update(None, "journal_mode", "wal")
-        .expect("Failed to set journal_mode=wal");
-    conn.pragma_update(None, "synchronous", "off")
-        .expect("Failed to set synchronous=off");
-
-    // Init database schema
-    conn.execute_batch(include_str!("schema.sql"))
-        .expect("Failed to initialize database schema");
-
-    let context = Context {
-        conn: Mutex::new(conn),
-        count: 0,
-        dropped: 0,
-    };
-
+unsafe extern "C" fn output_init(
+    _conf: *const c_void,
+    threaded: bool,
+    init_data: *mut *mut c_void,
+) -> c_int {
+    let context = output_init_rs(threaded);
     *init_data = Box::into_raw(Box::new(context)) as *mut _;
     0
 }
 
 unsafe extern "C" fn output_close(init_data: *const c_void) {
     let context = Box::from_raw(init_data as *mut Context);
-    SCLogNotice!(
-        "SQLite output finished: count={}, dropped={}",
-        context.count,
-        context.dropped
-    );
+    log::info!("SQLite output finished: count={}", context.count);
     std::mem::drop(context);
+}
+
+fn output_write_rs(buf: &str, context: &mut Context) {
+    context.count += 1;
+
+    if let Err(err) = context.tx.send(buf.to_string()) {
+        log::error!("Eve record lost, {err:?}");
+    }
 }
 
 unsafe extern "C" fn output_write(
@@ -110,22 +90,12 @@ unsafe extern "C" fn output_write(
     _thread_data: *const c_void,
 ) -> c_int {
     let context = &mut *(init_data as *mut Context);
-
-    // Convert the C string to a Rust string.
-    let buf = if let Ok(buf) = ffi::str_from_c_parts(buffer, buffer_len) {
+    let buf = if let Ok(buf) = ffi::str_from_c_parts(buffer, buffer_len).to_str() {
         buf
     } else {
         return -1;
     };
-
-    context.count += 1;
-
-    let conn = context.conn.lock().unwrap();
-    if let Err(msg) = database::write_event(conn, buf) {
-        SCLogError!("Failed to write event to database: {msg:?}");
-        context.dropped += 1;
-    }
-
+    output_write_rs(buf, context);
     0
 }
 
@@ -140,6 +110,11 @@ unsafe extern "C" fn output_thread_init(
 unsafe extern "C" fn output_thread_deinit(_init_data: *const c_void, _thread_data: *mut c_void) {}
 
 unsafe extern "C" fn init_plugin() {
+    // Init Rust logger
+    // We don't log using `suricata` crate to simplify this plugin and reduce build time.
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+
+    // Register new eve filetype, then we can use it with `outputs.1.eve-log.filetype=sqlite`
     let file_type = ffi::SCEveFileType::new(
         "sqlite",
         output_init,
@@ -153,9 +128,5 @@ unsafe extern "C" fn init_plugin() {
 
 #[no_mangle]
 extern "C" fn SCPluginRegister() -> *const ffi::SCPlugin {
-    // Rust plugins need to initialize some Suricata internals so stuff like logging works.
-    suricata::plugin::init();
-
-    // Register our plugin.
     ffi::SCPlugin::new("Eve SQLite Output", "GPL-2.0", "ANSSI", init_plugin)
 }

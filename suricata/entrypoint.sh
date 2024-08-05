@@ -10,7 +10,6 @@ suricata --runmode=single --no-random -k none \
     --set plugins.0=suricata/libeve_sqlite_output.so \
     --set outputs.0.fast.enabled=no \
     --set outputs.1.eve-log.filetype=sqlite \
-    --set outputs.1.eve-log.filename=suricata/output/eve.db \
     --set outputs.1.eve-log.pcap-file=${PCAP_FILE:=true} \
     --set outputs.1.eve-log.types.3.http.dump-all-headers=both \
     --set outputs.1.eve-log.types.6.files.force-hash.0=sha256 \

@@ -25,7 +25,6 @@
 /// This will become part of the Suricata dependency crate at some point.
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_int, c_void};
-use std::str::Utf8Error;
 
 // Rust representation of a C plugin.
 #[repr(C)]
@@ -116,15 +115,11 @@ extern "C" {
 //
 // This is an alternative to CStr::from_ptr when the length is already known to avoid the
 // scan of the string to find the length (strlen).
-pub fn str_from_c_parts<'a>(
-    buffer: *const c_char,
-    buffer_len: c_int,
-) -> Result<&'a str, Utf8Error> {
+pub fn str_from_c_parts<'a>(buffer: *const c_char, buffer_len: c_int) -> &'a CStr {
     unsafe {
         CStr::from_bytes_with_nul_unchecked(std::slice::from_raw_parts(
             buffer as *const u8,
             buffer_len as usize + 1,
         ))
-        .to_str()
     }
 }

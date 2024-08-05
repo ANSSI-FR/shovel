@@ -3,9 +3,9 @@
 
 use lazy_static::lazy_static;
 use regex::Regex;
-use rusqlite::Connection;
+use rusqlite::{Connection, Transaction};
 use std::collections::HashMap;
-use std::sync::{Mutex, MutexGuard};
+use std::sync::Mutex;
 
 lazy_static! {
     static ref RE_EVENT_TYPE: Regex = Regex::new(r#""event_type":"([^"]+)""#).unwrap();
@@ -27,8 +27,7 @@ fn sc_ip_format(sc_ipaddr: String) -> String {
 }
 
 /// Add one Eve event to the SQL database
-/// TODO: use queue + thread looping on queue with transaction, to improve performance
-pub fn write_event(conn: MutexGuard<Connection>, buf: &str) -> Result<usize, rusqlite::Error> {
+fn write_event(transaction: &Transaction, buf: &str) -> Result<usize, rusqlite::Error> {
     // Use regex rather than JSON parsing for performance reasons.
     // Ignore events that don't have event_type field, such as stats.
     let Some(event_type_caps) = RE_EVENT_TYPE.captures(buf) else {
@@ -43,10 +42,11 @@ pub fn write_event(conn: MutexGuard<Connection>, buf: &str) -> Result<usize, rus
         let flow_id: u64 = flow_id_str.parse().expect("flow_id is not a u64");
         let pcap_filename_cap = RE_PCAP_FILENAME.captures(buf);
         if let Some(pcap_filename) = pcap_filename_cap.as_ref().map(|c| &c[1]) {
-            FLOW_PCAP
-                .lock()
-                .unwrap()
-                .insert(flow_id, pcap_filename.to_string());
+            if let Ok(ref mut m) = FLOW_PCAP.try_lock() {
+                m.insert(flow_id, pcap_filename.to_string());
+            } else {
+                log::warn!("Failed to lock FLOW_PCAP mutex, skipping insertion");
+            }
         }
     }
 
@@ -62,39 +62,86 @@ pub fn write_event(conn: MutexGuard<Connection>, buf: &str) -> Result<usize, rus
                 Some(v) => v,
                 None => pcap_filename_cap.as_ref().map(|c| &c[1]).unwrap_or(""),
             };
-            conn.execute(
+            transaction.execute(
                 "INSERT OR IGNORE INTO flow (id, src_ip, src_port, dest_ip, dest_port, pcap_filename, proto, app_proto, metadata, extra_data) \
                 values(?1->>'flow_id', ?2, ?1->>'src_port', ?3, ?1->>'dest_port', ?4, ?1->>'proto', ?1->>'app_proto', ?1->'metadata', ?1->'flow')",
                 (buf, sc_ip_format(src_ip.to_string()), sc_ip_format(dest_ip.to_string()), pcap_filename),
             )
         },
         "alert" => {
-            conn.execute(
+            transaction.execute(
                 "INSERT OR IGNORE INTO alert (flow_id, timestamp, extra_data) \
                 values(?1->>'flow_id', (UNIXEPOCH(SUBSTR(?1->>'timestamp', 1, 26), 'subsec') * 1000), json_extract(?1, '$.' || ?2))",
                 (buf, event_type),
             )
         },
         "anomaly" => {
-            conn.execute(
+            transaction.execute(
                 "INSERT OR IGNORE INTO anomaly (flow_id, timestamp, extra_data) \
                 values(?1->>'flow_id', (UNIXEPOCH(SUBSTR(?1->>'timestamp', 1, 26), 'subsec') * 1000), json_extract(?1, '$.' || ?2))",
                 (buf, event_type),
             )
         },
         "fileinfo" => {
-            conn.execute(
+            transaction.execute(
                 "INSERT OR IGNORE INTO fileinfo (flow_id, timestamp, extra_data) \
                 values(?1->>'flow_id', (UNIXEPOCH(SUBSTR(?1->>'timestamp', 1, 26), 'subsec') * 1000), json_extract(?1, '$.' || ?2))",
                 (buf, event_type),
             )
         },
         _ => {
-            conn.execute(
+            transaction.execute(
                 "INSERT OR IGNORE INTO 'app-event' (flow_id, timestamp, app_proto, extra_data) \
                 values(?1->>'flow_id', (UNIXEPOCH(SUBSTR(?1->>'timestamp', 1, 26), 'subsec') * 1000), ?2, json_extract(?1, '$.' || ?2))",
                 (buf, event_type),
             )
         }
+    }
+}
+
+pub struct Database {
+    conn: rusqlite::Connection,
+    rx: std::sync::mpsc::Receiver<String>,
+    count: usize,
+}
+
+impl Database {
+    /// Open SQLite database connection in WAL journal mode then init schema
+    pub fn new(
+        filename: String,
+        rx: std::sync::mpsc::Receiver<String>,
+    ) -> Result<Self, rusqlite::Error> {
+        let conn = Connection::open(filename)?;
+        conn.pragma_update(None, "journal_mode", "wal")
+            .expect("Failed to set journal_mode=wal");
+        conn.pragma_update(None, "synchronous", "off")
+            .expect("Failed to set synchronous=off");
+        conn.execute_batch(include_str!("schema.sql"))
+            .expect("Failed to initialize database schema");
+        Ok(Self { conn, rx, count: 0 })
+    }
+
+    fn batch_write_events(&mut self) -> Result<(), rusqlite::Error> {
+        while self.rx.iter().peekable().peek().is_some() {
+            let transaction = self.conn.transaction()?;
+            let n_insert: usize = self
+                .rx
+                .try_iter()
+                .map(|buf| write_event(&transaction, &buf))
+                .collect::<Result<Vec<_>, _>>()?
+                .iter()
+                .sum();
+            transaction.commit()?;
+            self.count += n_insert;
+        }
+        Ok(())
+    }
+
+    /// Database thread entry
+    pub fn run(&mut self) {
+        if let Err(err) = self.batch_write_events() {
+            log::error!("Failed to write batch of events: {err:?}");
+        }
+        log::info!("Database thread finished: count={}", self.count);
     }
 }
