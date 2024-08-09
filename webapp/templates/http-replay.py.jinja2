@@ -18,8 +18,9 @@
 # Filename: replay-{{ ns.service_name }}-{{ data[0].flow_id }}.py
 import json
 import logging
-import sys
+import random
 import requests
+import sys
 
 """
 This file was generated from network capture towards {{ data[0].hostname }}.
@@ -41,6 +42,10 @@ if len(sys.argv) > 2:
     EXTRA = json.loads(bytes.fromhex(sys.argv[2]).decode())
 else:
     EXTRA = []
+
+# SNIPPET: Generate uniformly random strings of length `k`
+# rand_choice = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+# value = "".join(random.choices(rand_choice, k=16))
 
 # FIXME: You should identify if a flagid was used in the following
 # payload. If it is the case, then you should loop using EXTRA.

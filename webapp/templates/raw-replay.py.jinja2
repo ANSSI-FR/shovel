@@ -13,6 +13,7 @@
 # Filename: replay-{{ ns.service_name }}-{{ data.flow_id }}.py
 import json
 import os
+import random
 
 from pwn import *
 
@@ -39,6 +40,10 @@ else:
 # Connect to remote and run the actual exploit
 # Timeout is important to prevent stall
 r = remote(HOST, {{ data.port }}, typ="{{ data.proto | lower }}", timeout=2)
+
+# SNIPPET: Generate uniformly random strings of length `k`
+# rand_choice = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+# value = "".join(random.choices(rand_choice, k=16))
 
 # FIXME: You should identify if a flag_id was used in the following
 # payload. If it is the case, then you should loop using EXTRA.
