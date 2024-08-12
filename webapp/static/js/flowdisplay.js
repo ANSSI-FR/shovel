@@ -131,20 +131,20 @@ class FlowDisplay {
   }
 
   async update () {
-    // Show welcome page when no flows are selected
+    // Show welcome page when flow is not found or not selected
     const url = new URL(document.location)
     const flowId = url.searchParams.get('flow')
-    document.getElementById('display-welcome').classList.toggle('d-none', flowId !== null)
-    document.getElementById('display-flow').classList.toggle('d-none', flowId === null)
-    document.getElementById('display-alerts').classList.toggle('d-none', flowId === null)
+    const flow = flowId ? await this.apiClient.getFlow(flowId) : null
+    document.getElementById('display-welcome').classList.toggle('d-none', flow !== null)
+    document.getElementById('display-flow').classList.toggle('d-none', flow === null)
+    document.getElementById('display-alerts').classList.toggle('d-none', flow === null)
     document.getElementById('display-down').classList.add('d-none')
     document.getElementById('display-app').classList.add('d-none')
     document.getElementById('display-raw').classList.add('d-none')
-    if (flowId === null) {
+    if (flow === null) {
       document.title = 'Shovel'
       return
     }
-    const flow = await this.apiClient.getFlow(flowId)
 
     // Format flow data
     const dateParams = {

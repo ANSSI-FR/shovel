@@ -63,7 +63,7 @@ export default class Api {
   async getFlow (flowId) {
     const response = await fetch(`api/flow/${flowId}`, {})
     if (!response.ok) {
-      throw Error('failed to get flow')
+      return null
     }
 
     const data = await response.json()
