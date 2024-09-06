@@ -354,7 +354,10 @@ app = Starlette(
         Route("/api/replay-raw/{flow_id:int}", api_replay_raw),
         Mount("/static", StaticFiles(directory="static")),
         Mount("/input_pcaps", StaticFiles(directory="../input_pcaps", check_dir=False)),
-        Mount("/filestore", StaticFiles(directory="../suricata/output/filestore")),
+        Mount(
+            "/filestore",
+            StaticFiles(directory="../suricata/output/filestore", check_dir=False),
+        ),
     ],
     lifespan=lifespan,
 )
