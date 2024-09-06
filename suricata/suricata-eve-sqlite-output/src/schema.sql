@@ -9,11 +9,11 @@ CREATE TABLE IF NOT EXISTS "flow" (
     src_ip TEXT NOT NULL,
     src_port INTEGER,
     src_ipport TEXT GENERATED ALWAYS
-        AS (src_ip || ':' || IFNULL(src_port, 'None')),
+        AS (src_ip || IIF(src_port IS NULL, '', ':' || src_port)),
     dest_ip TEXT NOT NULL,
     dest_port INTEGER,
     dest_ipport TEXT GENERATED ALWAYS
-        AS (dest_ip || ':' || IFNULL(dest_port, 'None')),
+        AS (dest_ip || IIF(dest_port IS NULL, '', ':' || dest_port)),
     pcap_filename TEXT,
     proto TEXT NOT NULL,
     app_proto TEXT,

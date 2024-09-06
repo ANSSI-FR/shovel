@@ -1,13 +1,12 @@
 // Copyright (C) 2024  ANSSI
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-use lazy_static::lazy_static;
 use regex::Regex;
-use rusqlite::{Connection, Transaction};
+use rusqlite::Transaction;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-lazy_static! {
+lazy_static::lazy_static! {
     static ref RE_EVENT_TYPE: Regex = Regex::new(r#""event_type":"([^"]+)""#).unwrap();
     static ref RE_SRC_IP: Regex = Regex::new(r#""src_ip":"([^"]+)""#).unwrap();
     static ref RE_DEST_IP: Regex = Regex::new(r#""dest_ip":"([^"]+)""#).unwrap();
@@ -18,11 +17,9 @@ lazy_static! {
 }
 
 fn sc_ip_format(sc_ipaddr: String) -> String {
-    use std::net::IpAddr;
-    let ip_addr: IpAddr = sc_ipaddr.parse().expect("invalid IP address");
-    match ip_addr {
-        IpAddr::V4(ip) => ip.to_string(),
-        IpAddr::V6(ip) => format!("[{ip}]"),
+    match sc_ipaddr.parse().expect("invalid IP address") {
+        std::net::IpAddr::V4(ip) => ip.to_string(),
+        std::net::IpAddr::V6(ip) => format!("[{ip}]"),
     }
 }
 
@@ -112,7 +109,7 @@ impl Database {
         filename: String,
         rx: std::sync::mpsc::Receiver<String>,
     ) -> Result<Self, rusqlite::Error> {
-        let conn = Connection::open(filename)?;
+        let conn = rusqlite::Connection::open(filename)?;
         conn.pragma_update(None, "journal_mode", "wal")
             .expect("Failed to set journal_mode=wal");
         conn.pragma_update(None, "synchronous", "off")
