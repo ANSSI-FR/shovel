@@ -8,7 +8,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-src blob:; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-src blob:; form-action 'none'">
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex">
   <title>Shovel</title>
@@ -179,12 +179,17 @@
                 </svg>
                 <span></span>
               </a>
+              <span class="nav nav-pills d-inline-flex" role="tablist" id="display-app-tabs">
+                <button class="nav-link py-0 active" id="display-app-render-tab" data-bs-toggle="pill" type="button" role="tab" aria-selected="true">Render</button>
+                <button class="nav-link py-0" id="display-app-utf8-tab" data-bs-toggle="pill" type="button" role="tab" aria-selected="false">UTF-8</button>
+                <button class="nav-link py-0" id="display-app-hex-tab" data-bs-toggle="pill" type="button" role="tab" aria-selected="false">Hex</button>
+              </span>
             </h1>
             <a class="text-nowrap" href="#" target="_blank">Generate script</a>
           </header>
           <div class="collapse show" id="display-app-collapse">
             <pre class="card-body mb-0"></pre>
-            <template id="display-app-fileinfo"><div class="card mt-1 mb-2 ms-3 bg-secondary-subtle font-monospace rounded-0"><header class="card-header d-flex justify-content-between py-1 px-2 small"><a class="text-reset text-decoration-none" data-bs-toggle="collapse" href="#" aria-expanded="true"><svg class="bi me-2" width="12" height="12"><use xlink:href="#chevron-down" /></svg><span></span></a></header><div class="collapse show"><pre class="card-body mb-0 p-2"></pre></div></div></template>
+            <template id="display-app-fileinfo"><div class="card mt-1 mb-2 ms-3 bg-secondary-subtle font-monospace rounded-0"><header class="card-header d-flex justify-content-between py-1 px-2 small"><a class="text-reset text-decoration-none" data-bs-toggle="collapse" href="#" aria-expanded="true"><svg class="bi me-2" width="12" height="12"><use xlink:href="#chevron-down" /></svg><span></span></a></header><div class="tab-content collapse show"><pre class="card-body mb-0 p-2 tab-pane active display-app-render"></pre><pre class="card-body mb-0 p-2 tab-pane display-app-utf8"></pre><pre class="card-body mb-0 p-2 tab-pane display-app-hex"></pre></div></div></template>
           </div>
         </section>
         <section class="card m-3 bg-body shadow font-monospace d-none border-primary" id="display-raw">

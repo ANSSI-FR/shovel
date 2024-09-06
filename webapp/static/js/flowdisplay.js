@@ -46,6 +46,19 @@ class FlowDisplay {
         e.preventDefault()
       }
     })
+
+    // On application card tab click, update view
+    document.getElementById('display-app-tabs').addEventListener('click', () => this.updateAppFileinfoViews())
+  }
+
+  /**
+   * Update fileinfo cards current view in application protocol card
+   */
+  updateAppFileinfoViews () {
+    const appViewType = document.getElementById('display-app-tabs').querySelector('.active')?.id.slice(12, -4)
+    document.querySelectorAll('.display-app-render').forEach(e => e.classList.toggle('active', appViewType === 'render'))
+    document.querySelectorAll('.display-app-utf8').forEach(e => e.classList.toggle('active', appViewType === 'utf8'))
+    document.querySelectorAll('.display-app-hex').forEach(e => e.classList.toggle('active', appViewType === 'hex'))
   }
 
   /**
@@ -84,6 +97,40 @@ class FlowDisplay {
       content = content.replaceAll(search, `<mark>${search}</mark>`)
     }
     return content
+  }
+
+  /**
+   * Render blob using file type
+   *
+   * @param {Blob} blob - Data to represent
+   * @param {String} fileType - File type (e.g. pdf, doc, svg)
+   * @param {HTMLElement} targetEl - Renderer will be appened as child of this element
+   */
+  renderBlob (blob, fileType, targetEl) {
+    if (['gif', 'jpg', 'png', 'svg'].includes(fileType)) {
+      const imgEl = document.createElement('img')
+      imgEl.classList.add('img-payload')
+      const objectURL = URL.createObjectURL(blob)
+      imgEl.src = objectURL
+      targetEl.appendChild(imgEl)
+    } else if (fileType === 'pdf') {
+      const iframeEl = document.createElement('iframe')
+      iframeEl.width = 500
+      iframeEl.height = 700
+      blob = blob.slice(0, blob.size, 'application/pdf')
+      const objectURL = URL.createObjectURL(blob)
+      iframeEl.src = objectURL
+      targetEl.appendChild(iframeEl)
+    } else if (fileType === 'html') {
+      const iframeEl = document.createElement('iframe')
+      iframeEl.classList.add('w-100', 'bg-white')
+      iframeEl.height = 300
+      iframeEl.sandbox = ''
+      blob = blob.slice(0, blob.size, 'text/html')
+      const objectURL = URL.createObjectURL(blob)
+      iframeEl.src = objectURL
+      targetEl.appendChild(iframeEl)
+    }
   }
 
   /**
@@ -245,69 +292,47 @@ class FlowDisplay {
 
         // Add corresponding fileinfo
         flow.fileinfo?.filter(d => d.tx_id === txId).forEach((data, i) => {
-          let mainEl
           const fileHref = `filestore/${data.sha256.slice(0, 2)}/${data.sha256}`
           const ext = this.getExtFromMagic(data.magic ?? '')
-          const cardBtns = document.createElement('span')
-          if (['gif', 'jpg', 'png', 'svg'].includes(ext)) {
-            mainEl = document.createElement('img')
-            mainEl.classList.add('img-payload')
-            mainEl.src = fileHref
-          } else if (ext === 'pdf') {
-            mainEl = document.createElement('iframe')
-            mainEl.width = 500
-            mainEl.height = 700
-            fetch(fileHref, {}).then((d) => d.blob()).then((blob) => {
-              blob = blob.slice(0, blob.size, 'application/pdf')
-              const objectURL = URL.createObjectURL(blob)
-              mainEl.src = objectURL
-            })
-          } else {
-            // Unknown format, also prepare hexdump view
-            mainEl = document.createElement('div')
-            const utf8View = document.createElement('code')
-            const hexView = document.createElement('code')
-            utf8View.innerText = ' '
-            hexView.classList.add('d-none')
-            mainEl.appendChild(utf8View)
-            mainEl.appendChild(hexView)
-            fetch(fileHref).then(r => r.blob()).then(d => {
-              d.text().then(t => {
-                utf8View.innerHTML = this.highlightPayload(t, flow.flow.flowvars?.map(d => d.match))
-              })
-              d.bytes().then(b => { hexView.textContent = this.renderHexDump(b) })
-            })
 
-            // Add utf-8/hex switch button
-            const switchViewBtn = document.createElement('a')
-            switchViewBtn.classList.add('text-nowrap')
-            switchViewBtn.classList.add('pe-2')
-            switchViewBtn.href = '#'
-            switchViewBtn.textContent = 'Hex'
-            switchViewBtn.addEventListener('click', e => {
-              const wasHex = utf8View.classList.contains('d-none')
-              hexView.classList.toggle('d-none', wasHex)
-              utf8View.classList.toggle('d-none', !wasHex)
-              e.target.textContent = wasHex ? 'Hex' : 'UTF-8'
-              e.preventDefault()
-            })
-            cardBtns.appendChild(switchViewBtn)
-          }
-
+          // Create "Download file" button
           const downloadBtn = document.createElement('a')
           downloadBtn.classList.add('text-nowrap')
           downloadBtn.href = fileHref
           downloadBtn.download = `${data.filename?.replace(/[^A-Za-z0-9]/g, '_')}.${ext}`
           downloadBtn.textContent = 'Download file'
-          cardBtns.appendChild(downloadBtn)
 
+          // Create views
+          const renderView = document.createElement('div')
+          const utf8View = document.createElement('code')
+          const hexView = document.createElement('code')
+          utf8View.innerText = ' ' // prevent single-line flicker on page load
+          hexView.innerText = ' '
+          fetch(fileHref).then(r => r.blob()).then(blob => {
+            this.renderBlob(blob, ext, renderView)
+            blob.text().then(t => {
+              utf8View.innerHTML = this.highlightPayload(t, flow.flow.flowvars?.map(d => d.match))
+              if (!renderView.firstChild) {
+                // no render done, show UTF-8 on render view
+                const renderCodeEl = document.createElement('code')
+                renderCodeEl.innerHTML = this.highlightPayload(t, flow.flow.flowvars?.map(d => d.match))
+                renderView.appendChild(renderCodeEl)
+              }
+            })
+            blob.bytes().then(b => { hexView.textContent = this.renderHexDump(b) })
+          })
+
+          // Clone fileinfo template and fill with content
           const cardEl = document.getElementById('display-app-fileinfo').content.cloneNode(true)
           cardEl.querySelector('header > a').href = `#fileinfo-${txId}-${i}`
           cardEl.querySelector('header > a > span').textContent = `File ${data.filename}` + (data.magic ? `, ${data.magic}` : '')
-          cardEl.querySelector('header').appendChild(cardBtns)
+          cardEl.querySelector('header').appendChild(downloadBtn)
           cardEl.querySelector('div.collapse').id = `fileinfo-${txId}-${i}`
-          cardEl.querySelector('pre').appendChild(mainEl)
+          cardEl.querySelector('pre.display-app-render').appendChild(renderView)
+          cardEl.querySelector('pre.display-app-utf8').appendChild(utf8View)
+          cardEl.querySelector('pre.display-app-hex').appendChild(hexView)
           body.appendChild(cardEl)
+          this.updateAppFileinfoViews()
         })
       })
     }
