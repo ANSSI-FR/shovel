@@ -10,6 +10,7 @@ import Api from './api.js'
 // These should match defined magics in suricata.rules
 const MAGIC_EXT = {
   'GIF image': 'gif',
+  'HTML document': 'html',
   'JPEG image': 'jpg',
   'PDF document': 'pdf',
   'PNG image': 'png',
