@@ -86,9 +86,9 @@ application using the two following commands:
 > ```bash
 > ssh root@10.20.9.6 tcpdump -i game -n -w - 'tcp port not 22' | tcpdump -n -r - -G 30 -w input_pcaps/trace-%Y-%m-%d_%H-%M-%S.pcap
 > ```
-> For a Microsoft Windows system, you may adapt the following command (3389 is RDP):
+> For a Microsoft Windows system, you may run the following command (3389 is RDP) inside a PowerShell console:
 > ```powershell
-> .\tshark.exe -b duration:60 -w \\share\captures\trace -f "tcp port not 3389"
+> &'C:\Program Files\Wireshark\tshark.exe' -i game -w Z:\ -f "tcp port not 3389" -b duration:60
 > ```
 
 > [!WARNING]
