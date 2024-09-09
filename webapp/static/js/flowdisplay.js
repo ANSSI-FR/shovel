@@ -253,7 +253,8 @@ class FlowDisplay {
 
     // Application protocol card
     const appProto = flow.flow.app_proto
-    document.getElementById('display-down').classList.toggle('d-none', appProto)
+    const flowEstablished = flow.flow.state !== 'new'
+    document.getElementById('display-down').classList.toggle('d-none', flowEstablished)
     if (appProto && appProto !== 'failed' && flow[appProto] !== undefined) {
       document.getElementById('display-app').classList.remove('d-none')
       document.querySelector('#display-app > header > a').classList.toggle('d-none', appProto !== 'http')
@@ -338,7 +339,7 @@ class FlowDisplay {
     }
 
     // Show raw data card if a TCP or UDP connection was established
-    if (['TCP', 'UDP'].includes(flow.flow.proto) && appProto) {
+    if (['TCP', 'UDP'].includes(flow.flow.proto) && flowEstablished) {
       document.getElementById('display-raw').classList.remove('d-none')
       document.getElementById('display-raw-replay').href = `api/replay-raw/${flowId}`
 
