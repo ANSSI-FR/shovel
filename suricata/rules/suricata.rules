@@ -109,6 +109,7 @@ alert http any any -> any any (msg: "tag"; flow:to_server; content: "Python/3.";
 alert http any any -> any any (msg: "tag"; flow:to_server; content: "python-urllib3/"; startswith; http_user_agent; metadata: tag UA URLLIB3, color info; sid: 3010;)
 alert http any any -> any any (msg: "tag"; flow:to_server; content: "curl/"; startswith; http_user_agent; metadata: tag UA CURL, color info; sid: 3011;)
 alert http any any -> any any (msg: "tag"; flow:to_server; content: "Go-http-client/"; startswith; http_user_agent; metadata: tag UA Go, color info; sid: 3012;)
+alert http any any -> any any (msg: "tag"; flow:to_server; content: "Microsoft WinRM Client"; startswith; http_user_agent; metadata: tag UA WinRM, color info; sid: 3013;)
 
 # Common exploit payloads (sid 4001-5000)
 # content can not use doublequote, ;, : and |, see https://docs.suricata.io/en/suricata-7.0.6/rules/payload-keywords.html
@@ -194,6 +195,7 @@ alert ip any any -> any any (msg: "Found path '/tmp/'"; flow:to_server; content:
 alert ip any any -> any any (msg: "Found path '/tmp/' (URL encoded)"; flow:to_server; content: "%2Ftmp%2F"; metadata: tag /tmp/, color warning; sid: 5108;)
 alert ip any any -> any any (msg: "Found path traversal '../../'"; flow:to_server; content: "../../"; metadata: tag ../../, color warning; sid: 5109;)
 alert ip any any -> any any (msg: "Found Unicode escape '\\u00..'"; flow:to_server; content: "|5C|u00"; pcre: "/[0-9a-fA-F]{2}/"; distance: 0; metadata: tag Unicode, color warning; sid: 5201;)
+alert ip any any -> any any (msg: "Found empty comment '/**/'"; flow:to_server; content: "/**/"; metadata: tag Comment, color warning; sid: 5202;)
 
 # Dissection anomalies
 alert http any any -> any any (msg:"HTTP missing Host header"; flow:established,to_server; app-layer-event:http.missing_host_header; metadata: tag HTTP No Host, color warning; sid:6001;)
