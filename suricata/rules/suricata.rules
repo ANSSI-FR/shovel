@@ -183,8 +183,9 @@ rejectboth ip any any -> any any (msg: "Found XML '<!ENTITY' (base64)"; flow:to_
 rejectboth ip any any -> any any (msg: "Found XML '<!ENTITY' (base64)"; flow:to_server; content: "8IUVOVElUW"; nocase; metadata: tag <!ENTITY, color warning; sid: 4506;)
 
 # Common indicators, but might cause false positives
-alert ip any any -> any any (msg: "tag"; flow:established,to_server; flow.age:>10; flowbits: isnotset, slowflow; flowbits: set, slowflow; metadata: tag Slow, color warning; sid: 5001;)
-alert ip any any -> any any (msg: "Found TCP RST"; flow:to_server; flags: R+; metadata: tag RST, color warning; sid: 5002;)
+alert ip any any -> any any (msg: "tag"; flow:established; flow.age:>10; flowbits: isnotset, slowflow; flowbits: set, slowflow; metadata: tag Slow, color warning; sid: 5001;)
+alert ip any any -> any any (msg: "tag"; flow:established; dsize:1024; metadata: tag BIG, color warning; sid: 5002;)
+alert ip any any -> any any (msg: "Found TCP RST"; flow:to_server; flags: R+; metadata: tag RST, color warning; sid: 5003;)
 alert ip any any -> any any (msg: "Found path '/bin/'"; flow:to_server; content: "/bin/"; metadata: tag /bin/, color warning; sid: 5101;)
 alert ip any any -> any any (msg: "Found path '/bin/' (URL encoded)"; flow:to_server; content: "%2Fbin%2F"; metadata: tag /bin/, color warning; sid: 5102;)
 alert ip any any -> any any (msg: "Found path '/etc/'"; flow:to_server; content: "/etc/"; metadata: tag /etc/, color warning; sid: 5103;)
