@@ -8,7 +8,7 @@ jobs:
   python-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: chartboost/ruff-action@v1
         with:
           src: "./webapp"
@@ -19,9 +19,15 @@ jobs:
   javascript-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '*'
       - run: npm install standard
       - run: npx standard ./webapp/static
+
+  license-lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: fsfe/reuse-action@v4
