@@ -65,7 +65,7 @@ alert ip any any -> any any (msg: "tag"; file.data; content: "Vgm|20|"; startswi
 alert ip any any -> any any (msg: "tag"; file.data; content: "wOF"; startswith; fast_pattern; filemagic: "Web Open Font"; metadata: tag WOFF, color primary; sid: 1016;)
 alert ip any any -> any any (msg: "tag"; file.data; content: "|7F|ELF|02 01 01 00 00 00 00 00 00 00 00 00|"; startswith; fast_pattern; filemagic: "ELF"; metadata: tag ELF, color primary; sid: 1017;)
 alert ip any any -> any any (msg: "tag"; file.data; content: "f0VMRgIBAQAAAAAAAAAAAA"; metadata: tag ELF B64, color primary; sid: 1018;)
-alert ip any any -> any any (msg: "tag"; file.data; content: "<html"; depth: 64; nocase; fast_pattern; filemagic: "HTML document"; metadata: tag HTML, color primary; sid: 1019;)
+alert ip any any -> any any (msg: "tag"; file.data; content: "<html"; depth: 256; nocase; fast_pattern; filemagic: "HTML document"; metadata: tag HTML, color primary; sid: 1019;)
 
 # Tag HTTP methods and status (sid 2001-3000)
 alert http any any -> any any (msg: "tag"; http.method; content: "POST"; startswith; metadata: tag POST, color info; sid: 2001;)
