@@ -144,7 +144,7 @@ To achieve traffic mirroring, you may use these steps as reference:
 
  1. Enable SSH tunneling in vulnbox OpenSSH server:
     ```
-    echo -e 'PermitRootLogin yes\nPermitTunnel yes' | sudo tee -a /etc/ssh/sshd_config
+    echo -e 'PermitTunnel yes' | sudo tee -a /etc/ssh/sshd_config
     systemctl restart ssh
     ```
  2. Create `tun5` tunnel from the local machine to the vulnbox and up `tun5` on vulnbox:
