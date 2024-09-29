@@ -6,14 +6,14 @@ SPDX-License-Identifier: CC0-1.0
 -->
 
 Shovel is a web application that offers a graphical user interface to explore
-[Suricata EVE outputs](https://docs.suricata.io/en/suricata-7.0.1/output/eve/eve-json-output.html).
+[Suricata Extensible Event Format (EVE) outputs](https://docs.suricata.io/en/suricata-7.0.1/output/eve/eve-json-output.html).
 Its primary focus is to help [Capture-the-Flag players](https://en.wikipedia.org/wiki/Capture_the_flag_(cybersecurity))
 analyse network flows during stressful and time-limited attack-defense games such as
 [FAUSTCTF](https://faustctf.net/), [ENOWARS](https://enowars.com/) or [ECSC](https://ecsc.eu/).
 Shovel is developed in the context of
 [ECSC Team France](https://ctftime.org/team/159269/) training.
 
-![Shovel during ENOWARS7](./.github/demo.webp)
+![Shovel](./.github/demo.webp)
 
 You might also want to have a look at these other awesome traffic analyser tools:
 
@@ -97,7 +97,9 @@ application using the two following commands:
 
 #### Live capture mode (faster)
 
-This mode requires access to a network device with the game traffic.
+Live capture mode requires access to a network device with the game traffic.
+This can be achieved by mirroring vulnbox traffic through a tunnel,
+[see FAQ for more details](#how-to-setup-traffic-mirroring-using-openssh).
 Here this device is named `tun5`.
 
 Edit `docker-compose.yml` and comment option A and uncomment option B under
@@ -127,6 +129,35 @@ archiving purposes.
 `flow_id` is derived from timestamp (ms scale) and current flow parameters (such
 as source and destination ports and addresses). See source code:
 <https://github.com/OISF/suricata/blob/suricata-6.0.13/src/flow.h#L680>.
+
+### How to setup traffic mirroring using OpenSSH?
+
+Most CTF uses OpenVPN or Wireguard for the "game" network interface on the vulnbox,
+which means you can send the traffic to an OpenSSH `tun` tunnel.
+Using this method, Shovel can run on another machine in live capture mode.
+
+> [!WARNING]
+> If you need to clone a physical Ethernet interface such as `eth0`,
+> you will need to use `-o Tunnel=ethernet -w 5:5` in the SSH command line to create a `tap`.
+
+To achieve traffic mirroring, you may use these steps as reference:
+
+ 1. Enable SSH tunneling in vulnbox OpenSSH server:
+    ```
+    echo -e 'PermitRootLogin yes\nPermitTunnel yes' | sudo tee -a /etc/ssh/sshd_config
+    systemctl restart ssh
+    ```
+ 2. Create `tun5` tunnel from the local machine to the vulnbox and up `tun5` on vulnbox:
+    ```
+    sudo ssh -w 5:5 root@10.20.9.6 ip link set tun5 up
+    ```
+ 3. Up `tun5` on the local machine and start `tcpdump` to create pcap files:
+    ```
+    sudo ip link set tun5 up
+    sudo tcpdump -n -i tun5 -G 30 -Z root -w trace-%Y-%m-%d_%H-%M-%S.pcap
+    ```
+ 4. Mirror `game` traffic to `tun5` on the vulnbox.
+    This can be done using Nftables netdev `dup` option on `ingress` and `egress`.
 
 ### How do I reload rules without restarting Suricata?
 
