@@ -472,7 +472,7 @@ class FlowList {
       while (flowList.lastChild) {
         flowList.removeChild(flowList.lastChild)
       }
-      this.lastTick = -1
+      this.lastTick = null
 
       // Show loading indicator
       // As the list is empty, the infinite scroll callback won't be triggered
