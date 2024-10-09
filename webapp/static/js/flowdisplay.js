@@ -237,6 +237,7 @@ class FlowDisplay {
         const cardHeader = document.createElement('div')
         cardHeader.classList.add('card-header')
         cardHeader.textContent = data.signature
+        cardHeader.title = `Suricata alert rule with sid ${data.signature_id}.`
         cardEl.appendChild(cardHeader)
         alertsDiv.appendChild(cardEl)
       }
