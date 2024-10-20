@@ -2,9 +2,18 @@
 # Copyright (C) 2024  ANSSI
 # SPDX-License-Identifier: CC0-1.0
 
+set -euo pipefail
+
+SURICATA_CMD="suricata"
+if [ -n "$PCAP_OVER_IP" ]; then
+    PCAP_OVER_IP=$(echo "$PCAP_OVER_IP" | tr ":" " ")
+    SURICATA_CMD="nc -d $PCAP_OVER_IP | $SURICATA_CMD"
+fi
+
 # Arguments override default Suricata configuration,
 # see https://github.com/OISF/suricata/blob/suricata-7.0.5/suricata.yaml.in
-suricata --runmode=single --no-random -k none \
+eval "$SURICATA_CMD" \
+    --runmode=single --no-random -k none \
     -S suricata/rules/suricata.rules \
     -l suricata/output \
     --set plugins.0=suricata/libeve_sqlite_output.so \
