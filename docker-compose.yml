@@ -4,7 +4,6 @@ services:
   suricata:
     build: ./suricata
     image: anssi/shovel-suricata:dev
-    restart: always
     volumes:
       - "./input_pcaps:/input_pcaps:ro"
       - "./suricata/rules:/suricata/rules:ro"
@@ -24,6 +23,7 @@ services:
     # Option C: pcap-over-ip (fast and easy, for live analysis)
     # Connects to a pcap-over-ip server, such as pcap-broker to read PCAP data
     #command: -r /dev/stdin
+    #restart: always
     #depends_on:
     #  - pcap-broker
     #environment:
@@ -46,21 +46,21 @@ services:
     env_file:
       - .env
 
-  # pcap-broker:
-  #   container_name: pcap-broker
-  #   build:
-  #     context: .
-  #     dockerfile_inline: |
-  #       FROM golang:alpine
-  #       RUN apk add --no-cache build-base libpcap-dev openssh-client tcpdump
-  #       RUN go install github.com/fox-it/pcap-broker@latest
-  #       ENTRYPOINT ["pcap-broker"]
-  #   restart: always
-  #   volumes:
-  #     - "~/.ssh/id_ed25519:/root/.ssh/id_ed25519:ro"
-  #   environment:
-  #     PCAP_COMMAND: |-
-  #         ssh root@vulnbox -oStrictHostKeyChecking=no
-  #         tcpdump -U --immediate-mode -ni wg-faustctf -s 65535 -w -
-  #         not port 22
-  #     LISTEN_ADDRESS: 0.0.0.0:4242
+  #pcap-broker:
+  #  container_name: pcap-broker
+  #  build:
+  #    context: .
+  #    dockerfile_inline: |
+  #      FROM golang:alpine
+  #      RUN apk add --no-cache build-base libpcap-dev openssh-client tcpdump
+  #      RUN go install github.com/fox-it/pcap-broker@latest
+  #      ENTRYPOINT ["pcap-broker"]
+  #  restart: always
+  #  volumes:
+  #    - "~/.ssh/id_ed25519:/root/.ssh/id_ed25519:ro"
+  #  environment:
+  #    PCAP_COMMAND: |-
+  #        ssh root@vulnbox -oStrictHostKeyChecking=no
+  #        tcpdump -U --immediate-mode -ni wg-faustctf -s 65535 -w -
+  #        not port 22
+  #    LISTEN_ADDRESS: 0.0.0.0:4242

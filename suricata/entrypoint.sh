@@ -2,6 +2,7 @@
 # Copyright (C) 2024  ANSSI
 # SPDX-License-Identifier: CC0-1.0
 
+# pipefail: exit Suricata if pcap-over-ip connection ends
 set -euo pipefail
 
 SURICATA_CMD="suricata"
