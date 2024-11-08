@@ -9,19 +9,20 @@ services:
       - "./suricata/rules:/suricata/rules:ro"
       - "./suricata/output:/suricata/output:rw"
 
-    # Option A: pcap read mode (slower, for archives replay or rootless CTF)
+    # Mode A: pcap replay mode (slower, for archives replay or rootless CTF)
     # Add `--pcap-file-continuous` to watch for new pcap in folder.
     command: -r /input_pcaps
 
-    # Option B: capture device (fast, for live analysis)
-    # Drastically reduces ingest delay, but requires access to an interface.
+    # Mode B: capture interface (fast, requires root on vulnbox and in Docker)
+    # Drastically reduces ingest delay, but requires to setup traffic mirroring
+    # between the vulnbox game interface and a team server.
     #command: -i tun5
     #cap_add:
     #  - NET_ADMIN
     #network_mode: "host"
 
-    # Option C: pcap-over-ip (fast and easy, for live analysis)
-    # Connects to a pcap-over-ip server, such as pcap-broker to read PCAP data
+    # Mode C: PCAP-over-IP (fast, requires root on vulnbox)
+    # Connects to a PCAP-over-IP server, such as pcap-broker to read PCAP data.
     #command: -r /dev/stdin
     #restart: always
     #depends_on:
@@ -61,6 +62,5 @@ services:
   #  environment:
   #    PCAP_COMMAND: |-
   #        ssh root@vulnbox -oStrictHostKeyChecking=no
-  #        tcpdump -U --immediate-mode -ni wg-faustctf -s 65535 -w -
-  #        not port 22
+  #        tcpdump -U --immediate-mode -ni game -s 65535 -w - not tcp port 22
   #    LISTEN_ADDRESS: 0.0.0.0:4242

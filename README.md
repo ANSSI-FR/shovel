@@ -57,18 +57,23 @@ If you modify this file after starting Suricata, you may reload rules using
 
 ### Network capture
 
-Suricata supports [multiple capture methods](https://docs.suricata.io/en/suricata-7.0.6/support-status.html#id6).
-Please use a live capture with `AF_PACKET` when possible,
-or `libpcap` if you can't mirror the traffic (archives replay or rootless CTF).
+Shovel currently implements 3 capture modes:
+  - Mode A: pcap replay (slower, for archives replay or rootless CTF),
+  - Mode B: capture interface (fast, requires root on vulnbox and in Docker),
+  - Mode C: PCAP-over-IP (fast, requires root on vulnbox).
 
-#### pcap capture mode (slower)
+Please prefer mode B or C to get the best latency between the game network and
+Suricata.
+Use mode A only if you are not root on the vulnbox and have access to pcap files
+indirectly.
+
+#### Mode A: pcap capture mode (slower)
 
 Place pcap files in a folder such as `input_pcaps/`.
-
 If you are continuously adding new pcap, add `--pcap-file-continuous` to
 Suricata command line.
 
-Then you may start the compose using:
+Then you may start Shovel using:
 ```bash
 docker compose up -d
 ```
@@ -80,33 +85,29 @@ application using the two following commands:
 (cd webapp && uvicorn --host 127.0.0.1 main:app)
 ```
 
-> [!TIP]
-> If the CTF event does not already provide PCAP files, then you may adapt the
-> following command for a GNU/Linux system (22 is SSH):
-> ```bash
-> ssh root@10.20.9.6 tcpdump -i game -n -w - 'tcp port not 22' | tcpdump -n -r - -G 30 -w input_pcaps/trace-%Y-%m-%d_%H-%M-%S.pcap
-> ```
-> For a Microsoft Windows system, you may run the following command (3389 is RDP) inside a PowerShell console:
-> ```powershell
-> &'C:\Program Files\Wireshark\tshark.exe' -i game -w Z:\ -f "tcp port not 3389" -b duration:60
-> ```
-
 > [!WARNING]
 > Please note that restarting Suricata will cause all network capture files to
 > be loaded again. It might add some delay before observing new flows.
 
-#### Live capture mode (faster)
+> [!TIP]
+> For a Microsoft Windows system, you may capture network traffic using the
+> following command (3389 is RDP) inside a PowerShell console:
+> ```powershell
+> &'C:\Program Files\Wireshark\tshark.exe' -i game -w Z:\ -f "tcp port not 3389" -b duration:60
+> ```
 
-Live capture mode requires access to a network device with the game traffic.
+#### Mode B: Live capture interface mode (fast)
+
+This mode requires to have direct access to the game network interface.
 This can be achieved by mirroring vulnbox traffic through a tunnel,
 [see FAQ for more details](#how-to-setup-traffic-mirroring-using-openssh).
 Here this device is named `tun5`.
 
-Edit `docker-compose.yml` and comment option A and uncomment option B under
+Edit `docker-compose.yml` and comment mode A and uncomment mode B under
 `suricata` container definitions.
-Then, you may start the compose using:
+Then, you may start Shovel using:
 ```bash
-docker compose up -d
+sudo docker compose up -d
 ```
 
 If you don't want to use Docker, you may manually launch Suricata and the web
@@ -119,8 +120,37 @@ sudo ./suricata/entrypoint.sh -i tun5
 > [!WARNING]
 > Please note that stopping Suricata will stop network capture.
 
-You may run `sudo tcpdump -n -i tun5 -G 30 -w trace-%Y-%m-%d_%H-%M-%S.pcap` for
-archiving purposes.
+You may also run `sudo tcpdump -n -i tun5 -G 30 -w trace-%Y-%m-%d_%H-%M-%S.pcap`
+for archiving purposes.
+
+### Mode C: Live capture using PCAP-over-IP (fast)
+
+This mode requires to have access to a TCP listener exposing PCAP-over-IP.
+Such server can be easily spawned using:
+```bash
+tcpdump -U --immediate-mode -ni game -s 65535 -w - not tcp port 22 | nc -l 57012
+```
+
+If you need to route PCAP-over-IP to multiple clients, you should consider using
+[pcap-broker](https://github.com/fox-it/pcap-broker).
+An example is given in `docker-compose.yml`.
+
+Edit `docker-compose.yml` and comment mode A and uncomment mode C under
+`suricata` container definitions.
+Then, you may start Shovel using:
+```bash
+sudo docker compose up -d
+```
+
+If you don't want to use Docker, you may manually launch Suricata and the web
+application using the two following commands:
+```bash
+PCAP_OVER_IP=pcap-broker:4242 ./suricata/entrypoint.sh -r /dev/stdin
+(cd webapp && uvicorn --host 127.0.0.1 main:app)
+```
+
+> [!WARNING]
+> Please note that stopping Suricata will stop network capture.
 
 ## Frequently Asked Questions
 
@@ -133,7 +163,7 @@ as source and destination ports and addresses). See source code:
 ### How to setup traffic mirroring using OpenSSH?
 
 Most CTF uses OpenVPN or Wireguard for the "game" network interface on the vulnbox,
-which means you can send the traffic to an OpenSSH `tun` tunnel.
+which means you can duplicate the traffic to an OpenSSH `tun` tunnel.
 Using this method, Shovel can run on another machine in live capture mode.
 
 > [!WARNING]
@@ -149,7 +179,8 @@ To achieve traffic mirroring, you may use these steps as reference:
     ```
  2. Create `tun5` tunnel from the local machine to the vulnbox and up `tun5` on vulnbox:
     ```
-    sudo ssh -w 5:5 root@10.20.9.6 ip link set tun5 up
+    sudo ip tuntap add tun5 mode tun user $USER
+    ssh -w 5:5 root@10.20.9.6 ip link set tun5 up
     ```
  3. Up `tun5` on the local machine and start `tcpdump` to create pcap files:
     ```
