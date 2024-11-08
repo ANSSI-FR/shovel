@@ -6,7 +6,7 @@
 set -euo pipefail
 
 SURICATA_CMD="suricata"
-if [ -n "$PCAP_OVER_IP" ]; then
+if [ -n "${PCAP_OVER_IP+x}" ]; then
     PCAP_OVER_IP=$(echo "$PCAP_OVER_IP" | tr ":" " ")
     SURICATA_CMD="nc -d $PCAP_OVER_IP | $SURICATA_CMD"
 fi
