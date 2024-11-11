@@ -148,6 +148,7 @@ impl Database {
 
     /// Database thread entry
     pub fn run(&mut self) {
+        log::debug!("Database thread started");
         if let Err(err) = self.batch_write_events() {
             log::error!("Failed to write batch of events: {err:?}");
         }

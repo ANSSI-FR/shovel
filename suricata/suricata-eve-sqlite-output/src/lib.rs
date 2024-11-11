@@ -1,11 +1,8 @@
 // Copyright (C) 2024  ANSSI
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-// FFI helpers from https://github.com/jasonish/suricata-redis-output/blob/04f7b452afd55fa56f6900dad38eee42f482eee9/src/ffi.rs
-// Maybe one day these will be included inside suricata crate.
-mod ffi;
-
 mod database;
+mod ffi;
 
 use std::fmt::Debug;
 use std::os::raw::{c_char, c_int, c_void};
@@ -38,7 +35,7 @@ struct Context {
     count: usize,
 }
 
-fn output_init_rs(threaded: bool) -> Context {
+extern "C" fn output_init(_conf: *const c_void, threaded: bool, data: *mut *mut c_void) -> c_int {
     assert!(
         !threaded,
         "SQLite output plugin does not support threaded EVE yet"
@@ -56,77 +53,83 @@ fn output_init_rs(threaded: bool) -> Context {
         }
     };
     std::thread::spawn(move || database_client.run());
-    Context { tx, count: 0 }
-}
+    let context_ptr = Box::into_raw(Box::new(Context { tx, count: 0 }));
 
-unsafe extern "C" fn output_init(
-    _conf: *const c_void,
-    threaded: bool,
-    init_data: *mut *mut c_void,
-) -> c_int {
-    let context = output_init_rs(threaded);
-    *init_data = Box::into_raw(Box::new(context)) as *mut _;
+    unsafe {
+        *data = context_ptr as *mut _;
+    }
     0
 }
 
-unsafe extern "C" fn output_close(init_data: *const c_void) {
-    let context = Box::from_raw(init_data as *mut Context);
+extern "C" fn output_deinit(data: *const c_void) {
+    let context = unsafe { Box::from_raw(data as *mut Context) };
     log::info!("SQLite output finished: count={}", context.count);
     std::mem::drop(context);
 }
 
-fn output_write_rs(buf: &str, context: &mut Context) {
-    context.count += 1;
-
-    if let Err(err) = context.tx.send(buf.to_string()) {
-        log::error!("Eve record lost, {err:?}");
-    }
-}
-
-unsafe extern "C" fn output_write(
+extern "C" fn output_write(
     buffer: *const c_char,
     buffer_len: c_int,
-    init_data: *const c_void,
+    data: *const c_void,
     _thread_data: *const c_void,
 ) -> c_int {
-    let context = &mut *(init_data as *mut Context);
-    let buf = if let Ok(buf) = ffi::str_from_c_parts(buffer, buffer_len).to_str() {
-        buf
-    } else {
-        return -1;
+    // Handle FFI arguments
+    let context = unsafe { &mut *(data as *mut Context) };
+    let text_cstr = unsafe {
+        std::ffi::CStr::from_bytes_with_nul_unchecked(std::slice::from_raw_parts(
+            buffer as *const u8,
+            buffer_len as usize + 1,
+        ))
     };
-    output_write_rs(buf, context);
+    let text = text_cstr.to_string_lossy();
+
+    // Send text buffer to database thread
+    context.count += 1;
+    if let Err(_err) = context.tx.send(text.to_string()) {
+        log::error!("Failed to send Eve record to database thread");
+    }
     0
 }
 
-unsafe extern "C" fn output_thread_init(
-    _init_data: *const c_void,
+extern "C" fn output_thread_init(
+    _data: *const c_void,
     _thread_id: std::os::raw::c_int,
     _thread_data: *mut *mut c_void,
 ) -> c_int {
     0
 }
 
-unsafe extern "C" fn output_thread_deinit(_init_data: *const c_void, _thread_data: *mut c_void) {}
+extern "C" fn output_thread_deinit(_data: *const c_void, _thread_data: *mut c_void) {}
 
-unsafe extern "C" fn init_plugin() {
+extern "C" fn plugin_init() {
     // Init Rust logger
-    // We don't log using `suricata` crate to simplify this plugin and reduce build time.
+    // don't log using `suricata` crate to reduce build time.
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
-    // Register new eve filetype, then we can use it with `outputs.1.eve-log.filetype=sqlite`
-    let file_type = ffi::SCEveFileType::new(
-        "sqlite",
-        output_init,
-        output_close,
-        output_write,
-        output_thread_init,
-        output_thread_deinit,
-    );
-    ffi::SCRegisterEveFileType(file_type);
+    // Register new eve filetype, then we can use it with `eve-log.filetype=sqlite`
+    let file_type = ffi::SCEveFileType {
+        name: c"sqlite".as_ptr(),
+        Init: output_init,
+        ThreadInit: output_thread_init,
+        Write: output_write,
+        ThreadDeinit: output_thread_deinit,
+        Deinit: output_deinit,
+        pad: [0, 0],
+    };
+    let file_type_ptr = Box::into_raw(Box::new(file_type));
+    if !unsafe { ffi::SCRegisterEveFileType(file_type_ptr) } {
+        log::error!("Failed to register sqlite plugin");
+    }
 }
 
+/// Plugin entrypoint, registers [`plugin_init`] function in Suricata
 #[no_mangle]
 extern "C" fn SCPluginRegister() -> *const ffi::SCPlugin {
-    ffi::SCPlugin::new("Eve SQLite Output", "GPL-2.0", "ANSSI", init_plugin)
+    let plugin = ffi::SCPlugin {
+        name: c"Eve SQLite Output".as_ptr(),
+        license: c"GPL-2.0".as_ptr(),
+        author: c"ANSSI".as_ptr(),
+        Init: plugin_init,
+    };
+    Box::into_raw(Box::new(plugin))
 }
