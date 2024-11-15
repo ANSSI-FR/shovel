@@ -185,14 +185,6 @@ async def api_flow_get(request):
 async def api_flow_raw_get(request):
     flow_id = request.path_params["flow_id"]
 
-    # Query flow from database to get proto
-    cursor = await eve_database.execute(
-        "SELECT proto FROM flow WHERE id = ?", [flow_id]
-    )
-    flow = await cursor.fetchone()
-    if not flow:
-        raise HTTPException(404)
-
     # Get associated raw data
     cursor = await payload_database.execute(
         "SELECT server_to_client, blob FROM raw WHERE flow_id = ?1 ORDER BY count",
