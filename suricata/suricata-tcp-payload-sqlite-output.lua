@@ -60,6 +60,6 @@ function log (args)
 end
 
 function deinit (args)
-    SCLogNotice("TCP flow logged: " .. flow_pkt_count_total)
+    SCLogNotice("TCP payloads logged: " .. flow_pkt_count_total)
     database:close()
 end

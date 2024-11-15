@@ -69,6 +69,6 @@ function log (args)
 end
 
 function deinit (args)
-    SCLogNotice("UDP flow logged: " .. flow_pkt_count_total)
+    SCLogNotice("UDP payloads logged: " .. flow_pkt_count_total)
     database:close()
 end

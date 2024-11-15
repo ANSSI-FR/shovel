@@ -48,7 +48,7 @@ extern "C" fn output_init(_conf: *const c_void, threaded: bool, data: *mut *mut 
     let mut database_client = match database::Database::new(config.filename, rx) {
         Ok(client) => client,
         Err(err) => {
-            log::error!("Failed to initialize Database client: {:?}", err);
+            log::error!("Failed to initialize database client: {:?}", err);
             panic!()
         }
     };
