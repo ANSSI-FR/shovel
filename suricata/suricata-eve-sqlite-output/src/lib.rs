@@ -81,7 +81,7 @@ extern "C" fn output_write(
             buffer_len as usize + 1,
         ))
     };
-    let text = text_cstr.to_string_lossy().to_owned();
+    let text = text_cstr.to_string_lossy().into_owned();
 
     // Send text buffer to database thread
     context.count += 1;
