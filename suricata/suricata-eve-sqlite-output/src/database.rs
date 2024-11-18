@@ -1,7 +1,7 @@
 // Copyright (C) 2024  ANSSI
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-use regex::Regex;
+use regex_lite::Regex;
 use rusqlite::Transaction;
 use std::collections::HashMap;
 use std::sync::Mutex;
