@@ -268,15 +268,18 @@ class FlowDisplay {
         document.querySelector('#display-app > header > a').href = `api/replay-http/${flowId}`
         const headerUserAgents = new Set()
         const headerServers = new Set()
+        const headerAuthorization = new Set()
         const headerCookies = new Set()
         flow[appProto].forEach(data => {
           data.request_headers?.filter(x => x.name === 'User-Agent')?.forEach(x => headerUserAgents.add(x.value))
           data.response_headers?.filter(x => x.name === 'Server')?.forEach(x => headerServers.add(x.value))
+          data.request_headers?.filter(x => x.name === 'Authorization')?.forEach(x => headerAuthorization.add(x.value.split(';')[0]))
           data.request_headers?.filter(x => x.name === 'Cookie')?.forEach(x => headerCookies.add(x.value))
           data.response_headers?.filter(x => x.name === 'Set-Cookie')?.forEach(x => headerCookies.add(x.value.split(';')[0]))
         })
         body.textContent += headerUserAgents.size ? `User-Agent: ${[...headerUserAgents].join(', ')}\n` : ''
         body.textContent += headerServers.size ? `Server: ${[...headerServers].join(', ')}\n` : ''
+        body.textContent += headerAuthorization.size ? `Authorization: ${[...headerAuthorization].join(', ')}\n` : ''
         body.textContent += headerCookies.size ? `Cookie: ${[...headerCookies].join(', ')}\n\n` : '\n'
       }
 
