@@ -204,9 +204,9 @@ class FlowDisplay {
       second: 'numeric',
       fractionalSecondDigits: 3
     }
-    const dateStart = new Date(flow.flow.ts_start)
+    const dateStart = new Date(flow.flow.ts_start / 1000)
     const formatedDateStart = new Intl.DateTimeFormat(undefined, dateParams).format(dateStart)
-    const dateEnd = new Date(flow.flow.ts_end)
+    const dateEnd = new Date(flow.flow.ts_end / 1000)
     const formatedDateEnd = new Intl.DateTimeFormat(undefined, dateParams).format(dateEnd)
 
     // Change document title
@@ -220,7 +220,7 @@ class FlowDisplay {
     document.getElementById('display-flow-pcap').parentNode.classList.toggle('d-none', !flow.flow.pcap_filename)
     if (this.tickLength > 0) {
       document.getElementById('display-flow-tick').classList.remove('d-none')
-      const tick = ((flow.flow.ts_start / 1000 - this.startTs) / this.tickLength).toFixed(3)
+      const tick = ((flow.flow.ts_start / 1000000 - this.startTs) / this.tickLength).toFixed(3)
       document.querySelector('#display-flow-tick > a > span').textContent = tick
       document.querySelector('#display-flow-tick > a').dataset.ts = flow.flow.ts_start
     }

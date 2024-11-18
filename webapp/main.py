@@ -38,7 +38,7 @@ async def index(request):
 
 async def api_flow_list(request):
     # Parse GET arguments
-    ts_to = request.query_params.get("to", str(int(1e13)))
+    ts_to = request.query_params.get("to", str(int(1e16)))
     services = request.query_params.getlist("service")
     app_proto = request.query_params.get("app_proto")
     search = request.query_params.get("search")

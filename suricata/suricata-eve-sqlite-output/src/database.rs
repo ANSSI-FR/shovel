@@ -68,28 +68,28 @@ fn write_event(transaction: &Transaction, buf: &str) -> Result<usize, rusqlite::
         "alert" => {
             transaction.execute(
                 "INSERT OR IGNORE INTO alert (flow_id, timestamp, extra_data) \
-                values(?1->>'flow_id', (UNIXEPOCH(SUBSTR(?1->>'timestamp', 1, 26), 'subsec') * 1000), json_extract(?1, '$.' || ?2))",
+                values(?1->>'flow_id', (UNIXEPOCH(SUBSTR(?1->>'timestamp', 1, 19))*1000000 + SUBSTR(?1->>'timestamp', 21, 6)), json_extract(?1, '$.' || ?2))",
                 (buf, event_type),
             )
         },
         "anomaly" => {
             transaction.execute(
                 "INSERT OR IGNORE INTO anomaly (flow_id, timestamp, extra_data) \
-                values(?1->>'flow_id', (UNIXEPOCH(SUBSTR(?1->>'timestamp', 1, 26), 'subsec') * 1000), json_extract(?1, '$.' || ?2))",
+                values(?1->>'flow_id', (UNIXEPOCH(SUBSTR(?1->>'timestamp', 1, 19))*1000000 + SUBSTR(?1->>'timestamp', 21, 6)), json_extract(?1, '$.' || ?2))",
                 (buf, event_type),
             )
         },
         "fileinfo" => {
             transaction.execute(
                 "INSERT OR IGNORE INTO fileinfo (flow_id, timestamp, extra_data) \
-                values(?1->>'flow_id', (UNIXEPOCH(SUBSTR(?1->>'timestamp', 1, 26), 'subsec') * 1000), json_extract(?1, '$.' || ?2))",
+                values(?1->>'flow_id', (UNIXEPOCH(SUBSTR(?1->>'timestamp', 1, 19))*1000000 + SUBSTR(?1->>'timestamp', 21, 6)), json_extract(?1, '$.' || ?2))",
                 (buf, event_type),
             )
         },
         _ => {
             transaction.execute(
                 "INSERT OR IGNORE INTO 'app-event' (flow_id, timestamp, app_proto, extra_data) \
-                values(?1->>'flow_id', (UNIXEPOCH(SUBSTR(?1->>'timestamp', 1, 26), 'subsec') * 1000), ?2, json_extract(?1, '$.' || ?2))",
+                values(?1->>'flow_id', (UNIXEPOCH(SUBSTR(?1->>'timestamp', 1, 19))*1000000 + SUBSTR(?1->>'timestamp', 21, 6)), ?2, json_extract(?1, '$.' || ?2))",
                 (buf, event_type),
             )
         }

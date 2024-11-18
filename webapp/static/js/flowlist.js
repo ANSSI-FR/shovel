@@ -118,7 +118,7 @@ class FlowList {
       const untilTick = Number(e.target.value)
       const url = new URL(document.location)
       if (untilTick) {
-        url.searchParams.set('to', Math.floor(((untilTick + 1) * (this.tickLength || 1) + this.startTs)) * 1000)
+        url.searchParams.set('to', Math.floor(((untilTick + 1) * (this.tickLength || 1) + this.startTs)) * 1000000)
       } else {
         url.searchParams.delete('to')
         e.target.value = null
@@ -236,6 +236,7 @@ class FlowList {
    * @returns Pretty string representation
    */
   pprintDelay (delay) {
+    delay = delay / 1000
     if (delay > 1000) {
       delay = delay / 1000
       return `${delay.toPrecision(3)} s`
@@ -348,7 +349,7 @@ class FlowList {
   async fillFlowsList (flows, tags) {
     const flowList = document.getElementById('flow-list')
     flows.forEach((flow) => {
-      const date = new Date(flow.ts_start)
+      const date = new Date(flow.ts_start / 1000)
       const startDate = new Intl.DateTimeFormat(
         undefined,
         { hour: 'numeric', minute: 'numeric', second: 'numeric', fractionalSecondDigits: 1 }
@@ -362,7 +363,7 @@ class FlowList {
 
       // Create tick element on new tick
       if (this.tickLength > 0) {
-        const tick = Math.floor((flow.ts_start / 1000 - this.startTs) / this.tickLength)
+        const tick = Math.floor((flow.ts_start / 1000000 - this.startTs) / this.tickLength)
         if (tick !== this.lastTick) {
           const tickEl = document.createElement('span')
           tickEl.classList.add('list-group-item', 'sticky-top', 'pt-3', 'pb-1', 'px-2', 'border-0', 'border-bottom', 'bg-light-subtle', 'text-center', 'fw-semibold')
@@ -459,7 +460,7 @@ class FlowList {
 
       // Update time filter state
       if (toTs) {
-        const toTick = (Number(toTs) / 1000 - this.startTs) / (this.tickLength || 1) - 1
+        const toTick = (Number(toTs) / 1000000 - this.startTs) / (this.tickLength || 1) - 1
         document.getElementById('filter-time-until').value = toTick
       }
       document.getElementById('filter-time-until').classList.toggle('is-active', toTs)

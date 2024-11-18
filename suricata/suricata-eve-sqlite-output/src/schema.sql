@@ -2,10 +2,11 @@
 -- SPDX-License-Identifier: GPL-2.0-or-later
 CREATE TABLE IF NOT EXISTS "flow" (
     id INTEGER NOT NULL PRIMARY KEY,
+    -- SQLite UNIXEPOCH currently has only millisecond precision using "subsec", which is not enough
     ts_start INTEGER GENERATED ALWAYS
-        AS (UNIXEPOCH(SUBSTR(extra_data->>'start', 1, 26), 'subsec') * 1000) STORED,
+        AS (UNIXEPOCH(SUBSTR(extra_data->>'start', 1, 19))*1000000 + SUBSTR(extra_data->>'start', 21, 6)) STORED,
     ts_end INTEGER GENERATED ALWAYS
-        AS (UNIXEPOCH(SUBSTR(extra_data->>'end', 1, 26), 'subsec') * 1000) STORED,
+        AS (UNIXEPOCH(SUBSTR(extra_data->>'end', 1, 19))*1000000 + SUBSTR(extra_data->>'end', 21, 6)) STORED,
     src_ip TEXT NOT NULL,
     src_port INTEGER,
     src_ipport TEXT GENERATED ALWAYS
