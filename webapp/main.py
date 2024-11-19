@@ -152,15 +152,16 @@ async def api_flow_get(request):
         rows = await cursor.fetchall()
         result["fileinfo"] = [row_to_dict(f) for f in rows]
 
-    # Get associated protocol metadata
+    # Get associated application layer(s) metadata
     if app_proto and app_proto != "failed":
-        q_proto = app_proto if app_proto != "http2" else "http"
         cursor = await eve_database.execute(
-            "SELECT extra_data FROM 'app-event' WHERE flow_id = ? AND app_proto = ? ORDER BY id",
-            [flow_id, q_proto],
+            "SELECT app_proto, extra_data FROM 'app-event' WHERE flow_id = ? ORDER BY id",
+            [flow_id],
         )
-        rows = await cursor.fetchall()
-        result[app_proto] = [row_to_dict(f) for f in rows]
+        for row in await cursor.fetchall():
+            result[row["app_proto"]] = result.get(row["app_proto"], []) + [
+                json.loads(row["extra_data"])
+            ]
 
     # Get associated alert
     if result["flow"]["alerted"]:

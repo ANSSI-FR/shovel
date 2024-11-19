@@ -62,4 +62,4 @@ CREATE INDEX IF NOT EXISTS "alert_tag_idx" ON alert(tag);
 CREATE INDEX IF NOT EXISTS "alert_flow_id_idx" ON alert(flow_id);
 CREATE INDEX IF NOT EXISTS "anomaly_flow_id_idx" ON anomaly(flow_id);
 CREATE INDEX IF NOT EXISTS "fileinfo_flow_id_idx" ON fileinfo(flow_id);
-CREATE INDEX IF NOT EXISTS "app-event_flow_id_idx" ON "app-event"(flow_id, app_proto);
+CREATE INDEX IF NOT EXISTS "app-event_flow_id_idx" ON "app-event"(flow_id);

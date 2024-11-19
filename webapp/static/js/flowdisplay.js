@@ -253,7 +253,7 @@ class FlowDisplay {
     })
 
     // Application protocol card
-    const appProto = flow.flow.app_proto
+    const appProto = flow.flow.app_proto.replace('http2', 'http')
     const flowEstablished = flow.flow.state !== 'new'
     document.getElementById('display-down').classList.toggle('d-none', flowEstablished)
     if (appProto && appProto !== 'failed' && flow[appProto] !== undefined) {
@@ -288,7 +288,7 @@ class FlowDisplay {
         if (appProto === 'http' || appProto === 'http2') {
           // Format HTTP dissection
           spanEl.classList.add('fw-bold')
-          spanEl.textContent = `${data.http_method ?? '?'} http://${data.hostname}:${data.http_port ?? flow.flow.dest_port}${data.url ?? ''} ${data.protocol ?? '?'}  ◄ ${data.status ?? '?'}\n`
+          spanEl.textContent = `${data.http_method ?? '?'} http://${data.hostname}:${data.http_port ?? flow.flow.dest_port}${data.url ?? ''} ${data.protocol ?? ''}  ◄ ${data.status ?? '?'}\n`
         } else {
           // Directly pretty-print JSON Suricata app protocol dissection
           spanEl.textContent += `${JSON.stringify(data, null, 4)}\n`
