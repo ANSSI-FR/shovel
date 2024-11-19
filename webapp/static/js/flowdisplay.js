@@ -20,6 +20,22 @@ const MAGIC_EXT = {
   'Zip archive': 'zip'
 }
 
+const HTTP_HEADER_BL = [
+  ':method',
+  ':path',
+  ':scheme',
+  ':status',
+  'accept-ranges',
+  'connection',
+  'content-length',
+  'content-range',
+  'content-type',
+  'date',
+  'host',
+  'last-modified',
+  undefined // header name is missing
+]
+
 /**
  * Flow display
  */
@@ -253,7 +269,7 @@ class FlowDisplay {
     })
 
     // Application protocol card
-    const appProto = flow.flow.app_proto.replace('http2', 'http')
+    const appProto = flow.flow.app_proto?.replace('http2', 'http')
     const flowEstablished = flow.flow.state !== 'new'
     document.getElementById('display-down').classList.toggle('d-none', flowEstablished)
     if (appProto && appProto !== 'failed' && flow[appProto] !== undefined) {
@@ -266,21 +282,14 @@ class FlowDisplay {
       // In the case of HTTP, add some metadata at the top of the card
       if (appProto === 'http' || appProto === 'http2') {
         document.querySelector('#display-app > header > a').href = `api/replay-http/${flowId}`
-        const headerUserAgents = new Set()
-        const headerServers = new Set()
-        const headerAuthorization = new Set()
-        const headerCookies = new Set()
+        const allRequestHeaders = new Set()
+        const allResponseHeaders = new Set()
         flow[appProto].forEach(data => {
-          data.request_headers?.filter(x => x.name === 'User-Agent')?.forEach(x => headerUserAgents.add(x.value))
-          data.response_headers?.filter(x => x.name === 'Server')?.forEach(x => headerServers.add(x.value))
-          data.request_headers?.filter(x => x.name === 'Authorization')?.forEach(x => headerAuthorization.add(x.value.split(';')[0]))
-          data.request_headers?.filter(x => x.name === 'Cookie')?.forEach(x => headerCookies.add(x.value))
-          data.response_headers?.filter(x => x.name === 'Set-Cookie')?.forEach(x => headerCookies.add(x.value.split(';')[0]))
+          data.request_headers?.filter(x => !HTTP_HEADER_BL.includes(x?.name?.toLowerCase()))?.forEach(x => allRequestHeaders.add(`${x.name}: ${x.value}`))
+          data.response_headers?.filter(x => !HTTP_HEADER_BL.includes(x?.name?.toLowerCase()))?.forEach(x => allResponseHeaders.add(`${x.name}: ${x.value}`))
         })
-        body.textContent += headerUserAgents.size ? `User-Agent: ${[...headerUserAgents].join(', ')}\n` : ''
-        body.textContent += headerServers.size ? `Server: ${[...headerServers].join(', ')}\n` : ''
-        body.textContent += headerAuthorization.size ? `Authorization: ${[...headerAuthorization].join(', ')}\n` : ''
-        body.textContent += headerCookies.size ? `Cookie: ${[...headerCookies].join(', ')}\n\n` : '\n'
+        body.textContent += [...allRequestHeaders].join('\n') + '\n'
+        body.textContent += [...allResponseHeaders].join('\n') + '\n\n'
       }
 
       flow[appProto].forEach((data, txId) => {
