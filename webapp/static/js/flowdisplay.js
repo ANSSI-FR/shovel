@@ -357,6 +357,17 @@ class FlowDisplay {
           body.appendChild(cardEl)
           this.updateAppFileinfoViews()
         })
+
+        // Add extra HTTP redirection information if defined
+        if (appProto === 'http' || appProto === 'http2') {
+          const locationHeader = data.response_headers?.find(x => x?.name?.toLowerCase() === 'location')
+          if (locationHeader) {
+            const spanEl = document.createElement('p')
+            spanEl.classList.add('mt-1', 'mb-2', 'ms-3')
+            spanEl.textContent += `Redirection to ${locationHeader.value}`
+            body.appendChild(spanEl)
+          }
+        }
       })
     }
 
