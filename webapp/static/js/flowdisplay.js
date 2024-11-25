@@ -26,13 +26,22 @@ const HTTP_HEADER_BL = [
   ':scheme',
   ':status',
   'accept-ranges',
+  'allow',
+  'cache-control',
   'connection',
   'content-length',
   'content-range',
   'content-type',
+  'cross-origin-opener-policy',
   'date',
   'host',
   'last-modified',
+  'location',
+  'referrer-policy',
+  'transfer-encoding',
+  'vary',
+  'x-content-type-options',
+  'x-frame-options',
   undefined // header name is missing
 ]
 
