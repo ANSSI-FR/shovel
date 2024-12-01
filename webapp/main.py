@@ -20,10 +20,9 @@ from starlette.templating import Jinja2Templates
 
 def row_to_dict(row: aiosqlite.Row) -> dict:
     row_dict = dict(row)
-    if "metadata" in row_dict:
-        metadata = json.loads(row_dict.pop("metadata") or "{}")
-        row_dict.update(metadata)
-    extra_data = json.loads(row_dict.pop("extra_data"))
+    metadata = json.loads(row_dict.pop("metadata", "{}") or "{}")
+    row_dict.update(metadata)
+    extra_data = json.loads(row_dict.pop("extra_data", "{}") or "{}")
     row_dict.update(extra_data)
     return row_dict
 
@@ -53,7 +52,7 @@ async def api_flow_list(request):
           ftags_req AS (SELECT value FROM json_each(?2)),
           ftags_deny AS (SELECT value FROM json_each(?3)),
           fsearchfid AS (SELECT value FROM json_each(?6))
-        SELECT id, ts_start, ts_end, dest_ipport, app_proto,
+        SELECT id, ts_start, ts_end, dest_ipport, app_proto, metadata,
           (SELECT GROUP_CONCAT(tag) FROM alert WHERE flow_id = flow.id) AS tags
         FROM flow WHERE ts_start <= ?4 AND (?5 = app_proto OR ?5 IS NULL)
     """
@@ -102,7 +101,7 @@ async def api_flow_list(request):
         ),
     )
     rows = await cursor.fetchall()
-    flows = [dict(row) for row in rows]
+    flows = [row_to_dict(row) for row in rows]
 
     # Fetch application protocols
     cursor = await eve_database.execute("SELECT DISTINCT app_proto FROM flow")
