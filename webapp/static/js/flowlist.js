@@ -274,7 +274,7 @@ class FlowList {
     badge.textContent = text
     if (count !== undefined) {
       const badgeCount = document.createElement('span')
-      badgeCount.classList.add(`text-bg-dark`, 'bg-opacity-75', 'rounded', 'me-1', 'px-1')
+      badgeCount.classList.add('text-bg-dark', 'bg-opacity-75', 'rounded', 'me-1', 'px-1')
       badgeCount.textContent = count
       badge.prepend(badgeCount)
     }
@@ -410,8 +410,8 @@ class FlowList {
       tags.forEach(t => {
         const { tag, color } = t
         if (flowTags?.includes(tag)) {
-          const tag_id = 'tag_' + tag.replace(/[^A-Za-z0-9]/g, '_')
-          const badge = this.tagBadge(tag, color, flow.flowints?.[tag_id])
+          const tagId = 'tag_' + tag.replace(/[^A-Za-z0-9]/g, '_')
+          const badge = this.tagBadge(tag, color, flow.flowints?.[tagId])
           flowEl.appendChild(badge)
         }
       })
