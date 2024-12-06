@@ -7,7 +7,7 @@ COPY ./suricata-eve-sqlite-output/ /src/
 RUN RUSTFLAGS="-C target-feature=-crt-static" cargo build --release
 
 FROM alpine:3.20
-RUN apk add --no-cache suricata lua5.1-sqlite
+RUN apk add --no-cache suricata lua5.1-sqlite netcat-openbsd
 COPY . /suricata
 COPY --from=builder /src/target/release/libeve_sqlite_output.so /suricata/
 ENTRYPOINT ["/suricata/entrypoint.sh"]
